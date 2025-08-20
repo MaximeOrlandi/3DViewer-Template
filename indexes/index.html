@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Viewer</title>
+    
+    <!-- Importation de la police Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+    
+    <!-- Lien vers votre fichier de style CSS -->
+    <link rel="stylesheet" href="/indexes/style.css">
+</head>
+<body>
+
+    <!-- Controles en bas de l'écran -->
+    <div id="controls-container">
+        <!-- Boutons pour changer la couleur -->
+        <button id="btn-blue" class="color-btn" title="Bleu"></button>
+        <button id="btn-white" class="color-btn" title="Blanc"></button>
+        <button id="btn-red" class="color-btn" title="Rouge"></button>
+    </div>
+
+    <!-- Conteneur pour le rendu Three.js -->
+    <div id="container"></div>
+
+    <!-- Importation des bibliothèques Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/RGBELoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dat.gui@0.7.9/build/dat.gui.min.js"></script>
+
+    <!-- Lien vers votre fichier de script JavaScript -->
+    <script src="../studio/studio.js"></script>
+    <script src="../studio/app.js"></script>
+    <script src="../studio/datGUI.js"></script>
+</body>
+</html>
