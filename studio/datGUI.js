@@ -147,14 +147,37 @@ function syncGuiFromMaterial(name) {
     guiState.roughnessMap = def.roughnessMap || '';
     guiState.metalnessMap = def.metalnessMap || '';
     guiState.alphaMap = def.alphaMap || '';
-    const per = ['albedo','normal','roughness','metalness','alpha'];
-    for (const p of per) {
-        guiState[`${p}ScaleX`] = typeof def[`${p}ScaleX`] === 'number' ? def[`${p}ScaleX`] : 1;
-        guiState[`${p}ScaleY`] = typeof def[`${p}ScaleY`] === 'number' ? def[`${p}ScaleY`] : 1;
-        guiState[`${p}OffsetX`] = typeof def[`${p}OffsetX`] === 'number' ? def[`${p}OffsetX`] : 0;
-        guiState[`${p}OffsetY`] = typeof def[`${p}OffsetY`] === 'number' ? def[`${p}OffsetY`] : 0;
-        guiState[`${p}Rotation`] = typeof def[`${p}Rotation`] === 'number' ? def[`${p}Rotation`] : 0;
-    }
+    // Utiliser les paramètres TextureTransform unifiés
+    const textureTransformScaleX = typeof def.TextureTransform_ScaleX === 'number' ? def.TextureTransform_ScaleX : 1;
+    const textureTransformScaleY = typeof def.TextureTransform_ScaleY === 'number' ? def.TextureTransform_ScaleY : 1;
+    const textureTransformOffsetX = typeof def.TextureTransform_OffsetX === 'number' ? def.TextureTransform_OffsetX : 0;
+    const textureTransformOffsetY = typeof def.TextureTransform_OffsetY === 'number' ? def.TextureTransform_OffsetY : 0;
+    const textureTransformRotation = typeof def.TextureTransform_Rotation === 'number' ? def.TextureTransform_Rotation : 0;
+    
+    // Appliquer les mêmes valeurs à tous les types de textures
+    guiState.albedoScaleX = textureTransformScaleX;
+    guiState.albedoScaleY = textureTransformScaleY;
+    guiState.albedoOffsetX = textureTransformOffsetX;
+    guiState.albedoOffsetY = textureTransformOffsetY;
+    guiState.albedoRotation = textureTransformRotation;
+    
+    guiState.normalScaleX = textureTransformScaleX;
+    guiState.normalScaleY = textureTransformScaleY;
+    guiState.normalOffsetX = textureTransformOffsetX;
+    guiState.normalOffsetY = textureTransformOffsetY;
+    guiState.normalRotation = textureTransformRotation;
+    
+    guiState.roughnessScaleX = textureTransformScaleX;
+    guiState.roughnessScaleY = textureTransformScaleY;
+    guiState.roughnessOffsetX = textureTransformOffsetX;
+    guiState.roughnessOffsetY = textureTransformOffsetY;
+    guiState.roughnessRotation = textureTransformRotation;
+    
+    guiState.metalnessScaleX = textureTransformScaleX;
+    guiState.metalnessScaleY = textureTransformScaleY;
+    guiState.metalnessOffsetX = textureTransformOffsetX;
+    guiState.metalnessOffsetY = textureTransformOffsetY;
+    guiState.metalnessRotation = textureTransformRotation;
     guiState.normalIntensity = typeof def.normalIntensity === 'number' ? def.normalIntensity : 1;
     rebuildAllMapSections();
     updateAllControllersDisplay(gui);
@@ -180,11 +203,13 @@ function applyGuiToMaterial(name) {
         roughnessMap: guiState.roughnessMap || prev.roughnessMap,
         metalnessMap: guiState.metalnessMap || prev.metalnessMap,
         alphaMap: guiState.alphaMap || prev.alphaMap,
-        albedoScaleX: guiState.albedoScaleX, albedoScaleY: guiState.albedoScaleY, albedoOffsetX: guiState.albedoOffsetX, albedoOffsetY: guiState.albedoOffsetY, albedoRotation: guiState.albedoRotation,
-        normalScaleX: guiState.normalScaleX, normalScaleY: guiState.normalScaleY, normalOffsetX: guiState.normalOffsetX, normalOffsetY: guiState.normalOffsetY, normalRotation: guiState.normalRotation,
-        normalIntensity: guiState.normalIntensity,
-        roughnessScaleX: guiState.roughnessScaleX, roughnessScaleY: guiState.roughnessScaleY, roughnessOffsetX: guiState.roughnessOffsetX, roughnessOffsetY: guiState.roughnessOffsetY, roughnessRotation: guiState.roughnessRotation,
-        metalnessScaleX: guiState.metalnessScaleX, metalnessScaleY: guiState.metalnessScaleY, metalnessOffsetX: guiState.metalnessOffsetX, metalnessOffsetY: guiState.metalnessOffsetY, metalnessRotation: guiState.metalnessRotation
+        // Paramètres de transformation unifiés
+        TextureTransform_ScaleX: guiState.albedoScaleX,
+        TextureTransform_ScaleY: guiState.albedoScaleY,
+        TextureTransform_OffsetX: guiState.albedoOffsetX,
+        TextureTransform_OffsetY: guiState.albedoOffsetY,
+        TextureTransform_Rotation: guiState.albedoRotation,
+        normalIntensity: guiState.normalIntensity
     };
     setMaterialsConfig(config);
     if (materialsAPI.materialCacheByName) materialsAPI.materialCacheByName.delete(name);

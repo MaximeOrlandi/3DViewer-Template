@@ -85,11 +85,13 @@ function loadAndApplyMaps(material, definition) {
 
 function applyTextureTransformFor(tex, definition, prefix) {
     if (!tex || !definition) return;
-    const scaleX = typeof definition[`${prefix}ScaleX`] === 'number' ? definition[`${prefix}ScaleX`] : 1;
-    const scaleY = typeof definition[`${prefix}ScaleY`] === 'number' ? definition[`${prefix}ScaleY`] : 1;
-    const offsetX = typeof definition[`${prefix}OffsetX`] === 'number' ? definition[`${prefix}OffsetX`] : 0;
-    const offsetY = typeof definition[`${prefix}OffsetY`] === 'number' ? definition[`${prefix}OffsetY`] : 0;
-    const rotation = typeof definition[`${prefix}Rotation`] === 'number' ? definition[`${prefix}Rotation`] : 0;
+    // Utiliser les paramètres TextureTransform unifiés pour tous les types de textures
+    const scaleX = typeof definition.TextureTransform_ScaleX === 'number' ? definition.TextureTransform_ScaleX : 1;
+    const scaleY = typeof definition.TextureTransform_ScaleY === 'number' ? definition.TextureTransform_ScaleY : 1;
+    const offsetX = typeof definition.TextureTransform_OffsetX === 'number' ? definition.TextureTransform_OffsetX : 0;
+    const offsetY = typeof definition.TextureTransform_OffsetY === 'number' ? definition.TextureTransform_OffsetY : 0;
+    const rotation = typeof definition.TextureTransform_Rotation === 'number' ? definition.TextureTransform_Rotation : 0;
+    
     tex.wrapS = THREE.RepeatWrapping; tex.wrapT = THREE.RepeatWrapping;
     tex.repeat.set(scaleX, scaleY);
     tex.offset.set(offsetX, offsetY);
