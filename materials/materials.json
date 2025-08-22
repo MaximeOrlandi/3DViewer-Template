@@ -6,21 +6,21 @@
     "metalness": 1
   },
   "White": {
-    "color": "#ffffff",
+    "color": "#8ab3dd",
     "emissive": "#000000",
-    "roughness": 0.17,
-    "metalness": 0.7000000000000001,
-    "backfaceCulling": false,
+    "roughness": 0.6,
+    "metalness": 0,
+    "backfaceCulling": true,
     "alpha": 1,
     "albedoMap": "../materials/textures/noise.png",
     "normalMap": "../materials/textures/noise_nm.png",
     "roughnessMap": "../materials/textures/noise.png",
-    "TextureTransform_ScaleX": 2,
-    "TextureTransform_ScaleY": 2,
+    "TextureTransform_ScaleX": 2.31,
+    "TextureTransform_ScaleY": 1,
     "TextureTransform_OffsetX": 0,
     "TextureTransform_OffsetY": 0,
     "TextureTransform_Rotation": 0,
-    "normalIntensity": 5
+    "normalIntensity": 1
   },
   "Red": {
     "color": "#e61a1a",

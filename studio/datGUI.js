@@ -213,8 +213,10 @@ function applyGuiToMaterial(name) {
     };
     setMaterialsConfig(config);
     if (materialsAPI.materialCacheByName) materialsAPI.materialCacheByName.delete(name);
-    // Désactivé : ne plus appliquer automatiquement le matériau à l'objet 3D
-    // if (materialsAPI.applyMaterialByName) materialsAPI.applyMaterialByName(name);
+    
+    // IMPORTANT : Appliquer le matériau modifié pour voir les changements en temps réel
+    // Mais sans changer quel matériau est "sélectionné" dans l'interface
+    if (materialsAPI.applyMaterialByName) materialsAPI.applyMaterialByName(name);
 }
 
 const matFolder = gui.addFolder('Material');
@@ -269,8 +271,10 @@ function setTextureValue(targetKey, url) {
     setMaterialsConfig(config);
     guiState[targetKey] = url || '';
     if (materialsAPI.materialCacheByName) materialsAPI.materialCacheByName.delete(name);
-    // Désactivé : ne plus appliquer automatiquement le matériau à l'objet 3D
-    // if (materialsAPI.applyMaterialByName) materialsAPI.applyMaterialByName(name);
+    
+    // IMPORTANT : Appliquer le matériau modifié pour voir les changements de textures en temps réel
+    if (materialsAPI.applyMaterialByName) materialsAPI.applyMaterialByName(name);
+    
     const prefix = targetKey.replace('Map','');
     if (mapSections[prefix]) rebuildMapSection(prefix);
 }
@@ -362,8 +366,69 @@ const exportParams = { Export: () => {
 }};
 gui.add(exportParams, 'Export').name('Export materials');
 
+// Nouvelle fonction pour synchroniser datGUI avec le matériau actuellement appliqué
+// sans changer la sélection dans le menu
+function syncGuiFromCurrentMaterial(currentMaterialName) {
+    const config = getMaterialsConfig();
+    const def = config && config[currentMaterialName];
+    if (!def) return;
+    
+    // Synchroniser les valeurs SANS changer guiState.material
+    // pour que le menu "Select" garde sa sélection actuelle
+    guiState.color = def.color || '#ffffff';
+    guiState.emissive = def.emissive || '#000000';
+    guiState.roughness = typeof def.roughness === 'number' ? def.roughness : 0.5;
+    guiState.metalness = typeof def.metalness === 'number' ? def.metalness : 0.0;
+    guiState.backfaceCulling = (typeof def.backfaceCulling === 'boolean') ? def.backfaceCulling : true;
+    guiState.alpha = typeof def.alpha === 'number' ? def.alpha : 1;
+    guiState.albedoMap = def.albedoMap || '';
+    guiState.normalMap = def.normalMap || '';
+    guiState.roughnessMap = def.roughnessMap || '';
+    guiState.metalnessMap = def.metalnessMap || '';
+    guiState.alphaMap = def.alphaMap || '';
+    
+    // Utiliser les paramètres TextureTransform unifiés
+    const textureTransformScaleX = typeof def.TextureTransform_ScaleX === 'number' ? def.TextureTransform_ScaleX : 1;
+    const textureTransformScaleY = typeof def.TextureTransform_ScaleY === 'number' ? def.TextureTransform_ScaleY : 1;
+    const textureTransformOffsetX = typeof def.TextureTransform_OffsetX === 'number' ? def.TextureTransform_OffsetX : 0;
+    const textureTransformOffsetY = typeof def.TextureTransform_OffsetY === 'number' ? def.TextureTransform_OffsetY : 0;
+    const textureTransformRotation = typeof def.TextureTransform_Rotation === 'number' ? def.TextureTransform_Rotation : 0;
+    
+    // Appliquer les mêmes valeurs à tous les types de textures
+    guiState.albedoScaleX = textureTransformScaleX;
+    guiState.albedoScaleY = textureTransformScaleY;
+    guiState.albedoOffsetX = textureTransformOffsetX;
+    guiState.albedoOffsetY = textureTransformOffsetY;
+    guiState.albedoRotation = textureTransformRotation;
+    
+    guiState.normalScaleX = textureTransformScaleX;
+    guiState.normalScaleY = textureTransformScaleY;
+    guiState.normalOffsetX = textureTransformOffsetX;
+    guiState.normalOffsetY = textureTransformOffsetY;
+    guiState.normalRotation = textureTransformRotation;
+    
+    guiState.roughnessScaleX = textureTransformScaleX;
+    guiState.roughnessScaleY = textureTransformScaleY;
+    guiState.roughnessOffsetX = textureTransformOffsetX;
+    guiState.roughnessOffsetY = textureTransformOffsetY;
+    guiState.roughnessRotation = textureTransformRotation;
+    
+    guiState.metalnessScaleX = textureTransformScaleX;
+    guiState.metalnessScaleY = textureTransformScaleY;
+    guiState.metalnessOffsetX = textureTransformOffsetX;
+    guiState.metalnessOffsetY = textureTransformOffsetY;
+    guiState.metalnessRotation = textureTransformRotation;
+    
+    guiState.normalIntensity = typeof def.normalIntensity === 'number' ? def.normalIntensity : 1;
+    
+    // Reconstruire les sections de textures et mettre à jour l'affichage
+    rebuildAllMapSections();
+    updateAllControllersDisplay(gui);
+}
+
 // Expose a small API so app.js can force-sync GUI after model/material change
 window.__materialsGUI__ = {
-    syncGuiFromMaterial
+    syncGuiFromMaterial,
+    syncGuiFromCurrentMaterial
 };
 

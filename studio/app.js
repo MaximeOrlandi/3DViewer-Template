@@ -178,16 +178,16 @@ function loadModelFromUrl(url) {
 
             if (selectedMaterialName) {
                 applyMaterialByName(selectedMaterialName);
-                // Désactivé : ne plus synchroniser automatiquement datGUI
-                // if (window.__materialsGUI__ && typeof window.__materialsGUI__.syncGuiFromMaterial === 'function') {
-                //     window.__materialsGUI__.syncGuiFromMaterial(selectedMaterialName);
-                // }
+                // Synchroniser datGUI avec le matériau appliqué (sans changer la sélection)
+                if (window.__materialsGUI__ && typeof window.__materialsGUI__.syncGuiFromCurrentMaterial === 'function') {
+                    window.__materialsGUI__.syncGuiFromCurrentMaterial(selectedMaterialName);
+                }
             } else {
                 applyMaterialByName('White');
-                // Désactivé : ne plus synchroniser automatiquement datGUI
-                // if (window.__materialsGUI__ && typeof window.__materialsGUI__.syncGuiFromMaterial === 'function') {
-                //     window.__materialsGUI__.syncGuiFromMaterial('White');
-                // }
+                // Synchroniser datGUI avec le matériau appliqué (sans changer la sélection)
+                if (window.__materialsGUI__ && typeof window.__materialsGUI__.syncGuiFromCurrentMaterial === 'function') {
+                    window.__materialsGUI__.syncGuiFromCurrentMaterial('White');
+                }
             }
             resolve();
         }, undefined, reject);
@@ -197,24 +197,24 @@ function loadModelFromUrl(url) {
 // Buttons -> materials
 document.getElementById('btn-blue').addEventListener('click', () => {
     applyMaterialByName('Blue');
-    // Désactivé : ne plus synchroniser automatiquement datGUI
-    // if (window.__materialsGUI__ && typeof window.__materialsGUI__.syncGuiFromMaterial === 'function') {
-    //     window.__materialsGUI__.syncGuiFromMaterial('Blue');
-    // }
+    // Synchroniser datGUI avec le matériau appliqué (sans changer la sélection)
+    if (window.__materialsGUI__ && typeof window.__materialsGUI__.syncGuiFromCurrentMaterial === 'function') {
+        window.__materialsGUI__.syncGuiFromCurrentMaterial('Blue');
+    }
 });
 document.getElementById('btn-white').addEventListener('click', () => {
     applyMaterialByName('White');
-    // Désactivé : ne plus synchroniser automatiquement datGUI
-    // if (window.__materialsGUI__ && typeof window.__materialsGUI__.syncGuiFromMaterial === 'function') {
-    //     window.__materialsGUI__.syncGuiFromMaterial('White');
-    // }
+    // Synchroniser datGUI avec le matériau appliqué (sans changer la sélection)
+    if (window.__materialsGUI__ && typeof window.__materialsGUI__.syncGuiFromCurrentMaterial === 'function') {
+        window.__materialsGUI__.syncGuiFromCurrentMaterial('White');
+    }
 });
 document.getElementById('btn-red').addEventListener('click', () => {
     applyMaterialByName('Red');
-    // Désactivé : ne plus synchroniser automatiquement datGUI
-    // if (window.__materialsGUI__ && typeof window.__materialsGUI__.syncGuiFromMaterial === 'function') {
-    //     window.__materialsGUI__.syncGuiFromMaterial('Red');
-    // }
+    // Synchroniser datGUI avec le matériau appliqué (sans changer la sélection)
+    if (window.__materialsGUI__ && typeof window.__materialsGUI__.syncGuiFromCurrentMaterial === 'function') {
+        window.__materialsGUI__.syncGuiFromCurrentMaterial('Red');
+    }
 });
 
 // Animation loop
