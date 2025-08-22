@@ -178,14 +178,16 @@ function loadModelFromUrl(url) {
 
             if (selectedMaterialName) {
                 applyMaterialByName(selectedMaterialName);
-                if (window.__materialsGUI__ && typeof window.__materialsGUI__.syncGuiFromMaterial === 'function') {
-                    window.__materialsGUI__.syncGuiFromMaterial(selectedMaterialName);
-                }
+                // Désactivé : ne plus synchroniser automatiquement datGUI
+                // if (window.__materialsGUI__ && typeof window.__materialsGUI__.syncGuiFromMaterial === 'function') {
+                //     window.__materialsGUI__.syncGuiFromMaterial(selectedMaterialName);
+                // }
             } else {
                 applyMaterialByName('White');
-                if (window.__materialsGUI__ && typeof window.__materialsGUI__.syncGuiFromMaterial === 'function') {
-                    window.__materialsGUI__.syncGuiFromMaterial('White');
-                }
+                // Désactivé : ne plus synchroniser automatiquement datGUI
+                // if (window.__materialsGUI__ && typeof window.__materialsGUI__.syncGuiFromMaterial === 'function') {
+                //     window.__materialsGUI__.syncGuiFromMaterial('White');
+                // }
             }
             resolve();
         }, undefined, reject);
@@ -195,21 +197,24 @@ function loadModelFromUrl(url) {
 // Buttons -> materials
 document.getElementById('btn-blue').addEventListener('click', () => {
     applyMaterialByName('Blue');
-    if (window.__materialsGUI__ && typeof window.__materialsGUI__.syncGuiFromMaterial === 'function') {
-        window.__materialsGUI__.syncGuiFromMaterial('Blue');
-    }
+    // Désactivé : ne plus synchroniser automatiquement datGUI
+    // if (window.__materialsGUI__ && typeof window.__materialsGUI__.syncGuiFromMaterial === 'function') {
+    //     window.__materialsGUI__.syncGuiFromMaterial('Blue');
+    // }
 });
 document.getElementById('btn-white').addEventListener('click', () => {
     applyMaterialByName('White');
-    if (window.__materialsGUI__ && typeof window.__materialsGUI__.syncGuiFromMaterial === 'function') {
-        window.__materialsGUI__.syncGuiFromMaterial('White');
-    }
+    // Désactivé : ne plus synchroniser automatiquement datGUI
+    // if (window.__materialsGUI__ && typeof window.__materialsGUI__.syncGuiFromMaterial === 'function') {
+    //     window.__materialsGUI__.syncGuiFromMaterial('White');
+    // }
 });
 document.getElementById('btn-red').addEventListener('click', () => {
     applyMaterialByName('Red');
-    if (window.__materialsGUI__ && typeof window.__materialsGUI__.syncGuiFromMaterial === 'function') {
-        window.__materialsGUI__.syncGuiFromMaterial('Red');
-    }
+    // Désactivé : ne plus synchroniser automatiquement datGUI
+    // if (window.__materialsGUI__ && typeof window.__materialsGUI__.syncGuiFromMaterial === 'function') {
+    //     window.__materialsGUI__.syncGuiFromMaterial('Red');
+    // }
 });
 
 // Animation loop

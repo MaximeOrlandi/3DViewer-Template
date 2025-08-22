@@ -184,10 +184,10 @@ function syncGuiFromMaterial(name) {
 }
 
 function applyGuiToMaterial(name) {
-    // If GUI selection doesn't match current material, switch first
-    if (materialsAPI.selectedMaterialName && materialsAPI.selectedMaterialName !== name) {
-        if (materialsAPI.applyMaterialByName) materialsAPI.applyMaterialByName(name);
-    }
+    // Désactivé : ne plus changer automatiquement le matériau appliqué à l'objet 3D
+    // if (materialsAPI.selectedMaterialName && materialsAPI.selectedMaterialName !== name) {
+    //     if (materialsAPI.applyMaterialByName) materialsAPI.applyMaterialByName(name);
+    // }
     const config = getMaterialsConfig();
     if (!config) return;
     const prev = config[name] || {};
@@ -213,13 +213,15 @@ function applyGuiToMaterial(name) {
     };
     setMaterialsConfig(config);
     if (materialsAPI.materialCacheByName) materialsAPI.materialCacheByName.delete(name);
-    if (materialsAPI.applyMaterialByName) materialsAPI.applyMaterialByName(name);
+    // Désactivé : ne plus appliquer automatiquement le matériau à l'objet 3D
+    // if (materialsAPI.applyMaterialByName) materialsAPI.applyMaterialByName(name);
 }
 
 const matFolder = gui.addFolder('Material');
 matFolder.add(guiState, 'material', ['Blue', 'White', 'Red']).name('Select').onChange((name) => {
     syncGuiFromMaterial(name);
-    if (materialsAPI.applyMaterialByName) materialsAPI.applyMaterialByName(name);
+    // Désactivé : ne plus appliquer automatiquement le matériau à l'objet 3D
+    // if (materialsAPI.applyMaterialByName) materialsAPI.applyMaterialByName(name);
 });
 
 const propsFolder = gui.addFolder('PBR');
@@ -267,7 +269,8 @@ function setTextureValue(targetKey, url) {
     setMaterialsConfig(config);
     guiState[targetKey] = url || '';
     if (materialsAPI.materialCacheByName) materialsAPI.materialCacheByName.delete(name);
-    if (materialsAPI.applyMaterialByName) materialsAPI.applyMaterialByName(name);
+    // Désactivé : ne plus appliquer automatiquement le matériau à l'objet 3D
+    // if (materialsAPI.applyMaterialByName) materialsAPI.applyMaterialByName(name);
     const prefix = targetKey.replace('Map','');
     if (mapSections[prefix]) rebuildMapSection(prefix);
 }
