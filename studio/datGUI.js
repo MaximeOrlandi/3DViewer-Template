@@ -96,6 +96,7 @@ if (window.__cameraAPI__ && window.__cameraAPI__.controls) {
 
 const guiState = {
     material: 'White',
+    newMaterialName: '', // Champ pour le nouveau nom du matériau
     color: '#ffffff',
     emissive: '#000000',
     roughness: 0.6,
@@ -134,8 +135,23 @@ function updateAllControllersDisplay(rootGui) {
 function syncGuiFromMaterial(name) {
     const config = getMaterialsConfig();
     const def = config && config[name];
-    if (!def) return;
+    if (!def) {
+        console.warn(`Material "${name}" not found in configuration`);
+        // Si le matériau n'existe plus, sélectionner le premier disponible
+        const availableMaterials = Object.keys(config || {});
+        if (availableMaterials.length > 0) {
+            const firstMaterial = availableMaterials[0];
+            console.log(`Switching to first available material: "${firstMaterial}"`);
+            guiState.material = firstMaterial;
+            syncGuiFromMaterial(firstMaterial); // Récursion pour charger le bon matériau
+            return;
+        } else {
+            console.error('No materials available in configuration');
+            return;
+        }
+    }
     guiState.material = name;
+    guiState.newMaterialName = name; // Initialiser le champ de renommage avec le nom actuel
     guiState.color = def.color || '#ffffff';
     guiState.emissive = def.emissive || '#000000';
     guiState.roughness = typeof def.roughness === 'number' ? def.roughness : 0.5;
@@ -190,6 +206,13 @@ function applyGuiToMaterial(name) {
     // }
     const config = getMaterialsConfig();
     if (!config) return;
+    
+    // Vérifier que le matériau existe encore
+    if (!config[name]) {
+        console.warn(`Material "${name}" not found in configuration, cannot apply changes`);
+        return;
+    }
+    
     const prev = config[name] || {};
     config[name] = {
         color: guiState.color,
@@ -220,10 +243,42 @@ function applyGuiToMaterial(name) {
 }
 
 const matFolder = gui.addFolder('Material');
-matFolder.add(guiState, 'material', ['Blue', 'White', 'Red']).name('Select').onChange((name) => {
-    syncGuiFromMaterial(name);
-    // Désactivé : ne plus appliquer automatiquement le matériau à l'objet 3D
-    // if (materialsAPI.applyMaterialByName) materialsAPI.applyMaterialByName(name);
+
+// Créer le sélecteur de matériaux avec une liste dynamique
+let materialSelector = null;
+function createMaterialSelector() {
+    const config = getMaterialsConfig();
+    
+    // Récupérer dynamiquement les noms des matériaux depuis materials.json
+    // S'il n'y a pas de configuration, utiliser un matériau par défaut
+    let materialNames = [];
+    if (config && Object.keys(config).length > 0) {
+        materialNames = Object.keys(config);
+    } else {
+        // Fallback temporaire si aucun matériau n'est chargé
+        materialNames = ['Default'];
+        console.warn('No materials loaded from materials.json, using fallback');
+    }
+    
+    if (materialSelector) {
+        // Supprimer l'ancien sélecteur s'il existe
+        try { matFolder.remove(materialSelector); } catch (e) {}
+    }
+    
+    materialSelector = matFolder.add(guiState, 'material', materialNames).name('Select').onChange((name) => {
+        syncGuiFromMaterial(name);
+        // Désactivé : ne plus appliquer automatiquement le matériau à l'objet 3D
+        // if (materialsAPI.applyMaterialByName) materialsAPI.applyMaterialByName(name);
+    });
+}
+
+// Initialiser le sélecteur
+createMaterialSelector();
+
+// Champ de renommage du matériau
+matFolder.add(guiState, 'newMaterialName').name('Rename').onChange((newName) => {
+    // Mettre à jour le nom temporairement pour l'affichage
+    guiState.newMaterialName = newName;
 });
 
 const propsFolder = gui.addFolder('PBR');
@@ -262,6 +317,13 @@ function buildOptionsObject() {
 function setTextureValue(targetKey, url) {
     const config = getMaterialsConfig() || {};
     const name = guiState.material;
+    
+    // Vérifier que le matériau existe encore
+    if (!config[name]) {
+        console.warn(`Material "${name}" not found in configuration, cannot set texture`);
+        return;
+    }
+    
     if (!config[name]) config[name] = {};
     if (url) {
         config[name][targetKey] = url;
@@ -346,20 +408,68 @@ rebuildAllMapSections();
 refreshTextureList();
 
 
+// Fonction pour renommer un matériau dans la configuration
+function renameMaterialInConfig(config, oldName, newName) {
+    if (!config || !oldName || !newName || oldName === newName) return config;
+    
+    // Vérifier que le nouveau nom n'existe pas déjà
+    if (config[newName]) {
+        console.warn(`Material name "${newName}" already exists. Rename cancelled.`);
+        return config;
+    }
+    
+    // Copier le matériau avec le nouveau nom
+    config[newName] = { ...config[oldName] };
+    
+    // Supprimer l'ancien nom
+    delete config[oldName];
+    
+    console.log(`Material "${oldName}" renamed to "${newName}"`);
+    return config;
+}
+
 // Export button
 const exportParams = { Export: () => {
     const config = getMaterialsConfig();
     if (!config) return;
+    
+    // Vérifier s'il y a un renommage à effectuer
+    const currentMaterial = guiState.material;
+    const newName = guiState.newMaterialName.trim();
+    
+    if (newName && newName !== currentMaterial) {
+        // Renommer le matériau avant l'export
+        const updatedConfig = renameMaterialInConfig(config, currentMaterial, newName);
+        if (updatedConfig) {
+            // Mettre à jour la configuration en mémoire
+            setMaterialsConfig(updatedConfig);
+            
+            // Mettre à jour l'interface
+            guiState.material = newName;
+            
+            // Mettre à jour les options du sélecteur
+            updateMaterialSelectorOptions();
+        }
+    }
+    
+    // Exporter la configuration (mise à jour si renommage effectué)
+    const configToExport = getMaterialsConfig();
     fetch('../materials/materials.json', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(config, null, 2)
+        body: JSON.stringify(configToExport, null, 2)
     }).then(async (res) => {
         if (!res.ok) throw new Error('Save failed');
         console.log('Materials saved');
         // Force reload materials.json to verify write worked and update in-memory config
         const fresh = await fetch('../materials/materials.json?ts=' + Date.now(), { cache: 'no-store' }).then(r => r.json());
         setMaterialsConfig(fresh);
+        
+        // Réinitialiser le champ de renommage après sauvegarde
+        guiState.newMaterialName = '';
+        
+        // Mettre à jour le sélecteur avec les nouveaux noms de matériaux
+        updateMaterialSelectorOptions();
     }).catch((err) => {
         console.error('Save error', err);
     });
@@ -371,10 +481,14 @@ gui.add(exportParams, 'Export').name('Export materials');
 function syncGuiFromCurrentMaterial(currentMaterialName) {
     const config = getMaterialsConfig();
     const def = config && config[currentMaterialName];
-    if (!def) return;
+    if (!def) {
+        console.warn(`Material "${currentMaterialName}" not found in configuration`);
+        return;
+    }
     
     // Synchroniser les valeurs SANS changer guiState.material
     // pour que le menu "Select" garde sa sélection actuelle
+    guiState.newMaterialName = currentMaterialName; // Initialiser le champ de renommage avec le nom actuel
     guiState.color = def.color || '#ffffff';
     guiState.emissive = def.emissive || '#000000';
     guiState.roughness = typeof def.roughness === 'number' ? def.roughness : 0.5;
@@ -426,9 +540,21 @@ function syncGuiFromCurrentMaterial(currentMaterialName) {
     updateAllControllersDisplay(gui);
 }
 
+// Fonction pour mettre à jour les options du sélecteur de matériaux
+function updateMaterialSelectorOptions() {
+    // Recréer le sélecteur avec la nouvelle liste de matériaux
+    createMaterialSelector();
+}
+
 // Expose a small API so app.js can force-sync GUI after model/material change
 window.__materialsGUI__ = {
     syncGuiFromMaterial,
-    syncGuiFromCurrentMaterial
+    syncGuiFromCurrentMaterial,
+    updateMaterialSelectorOptions
 };
+
+// Mettre à jour le sélecteur après le chargement initial
+setTimeout(() => {
+    updateMaterialSelectorOptions();
+}, 100);
 

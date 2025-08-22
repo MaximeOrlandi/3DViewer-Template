@@ -5,7 +5,13 @@
     "roughness": 0.2,
     "metalness": 1
   },
-  "White": {
+  "Red": {
+    "color": "#e61a1a",
+    "emissive": "#000000",
+    "roughness": 0.03,
+    "metalness": 1
+  },
+  "noise_white": {
     "color": "#8ab3dd",
     "emissive": "#000000",
     "roughness": 0.6,
@@ -21,11 +27,5 @@
     "TextureTransform_OffsetY": 0,
     "TextureTransform_Rotation": 0,
     "normalIntensity": 1
-  },
-  "Red": {
-    "color": "#e61a1a",
-    "emissive": "#000000",
-    "roughness": 0.03,
-    "metalness": 1
   }
 }
