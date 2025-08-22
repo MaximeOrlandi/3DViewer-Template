@@ -1,6 +1,6 @@
 Param(
     [int]$Port = 8000,
-    [string]$Root = (Get-Location).Path
+    [string]$Root = (Convert-Path .)
 )
 
 $prefix = "http://localhost:$Port/"
