@@ -11,6 +11,7 @@
     "roughness": 0.75,
     "metalness": 0.91,
     "backfaceCulling": false,
+    "alpha": 1,
     "albedoMap": "../materials/textures/noise.png",
     "normalMap": "../materials/textures/noise_nm.png",
     "roughnessMap": "../materials/textures/noise.png",

@@ -208,6 +208,15 @@ propsFolder.add(guiState, 'alpha', 0, 1, 0.01).name('Alpha').onChange(() => appl
 matFolder.open();
 propsFolder.open();
 
+// Ajout du menu Texture Transform
+const textureTransformFolder = gui.addFolder('Texture Transform');
+textureTransformFolder.add(guiState, 'albedoScaleX', 0.01, 10, 0.01).name('Scale X').onChange(() => applyGuiToMaterial(guiState.material));
+textureTransformFolder.add(guiState, 'albedoScaleY', 0.01, 10, 0.01).name('Scale Y').onChange(() => applyGuiToMaterial(guiState.material));
+textureTransformFolder.add(guiState, 'albedoOffsetX', -5, 5, 0.01).name('Offset X').onChange(() => applyGuiToMaterial(guiState.material));
+textureTransformFolder.add(guiState, 'albedoOffsetY', -5, 5, 0.01).name('Offset Y').onChange(() => applyGuiToMaterial(guiState.material));
+textureTransformFolder.add(guiState, 'albedoRotation', -Math.PI, Math.PI, 0.01).name('Rotation').onChange(() => applyGuiToMaterial(guiState.material));
+textureTransformFolder.open();
+
 // Textures: list and selectors
 const texturesFolder = gui.addFolder('Textures');
 let availableTextures = [];
@@ -266,17 +275,12 @@ function rebuildMapSection(prefix) {
         try { section.folder.remove(ctrl); } catch (e) {}
     }
     section.transforms = [];
-    // If no texture assigned, keep only the selector
+    // Si pas de texture assignée, garder seulement le sélecteur
     const hasMap = !!guiState[`${prefix}Map`];
     if (!hasMap) {
         return;
     }
-    // Add transforms under this folder
-    section.transforms.push(section.folder.add(guiState, `${prefix}ScaleX`, 0.01, 10, 0.01).name('Scale X').onChange(() => applyGuiToMaterial(guiState.material)));
-    section.transforms.push(section.folder.add(guiState, `${prefix}ScaleY`, 0.01, 10, 0.01).name('Scale Y').onChange(() => applyGuiToMaterial(guiState.material)));
-    section.transforms.push(section.folder.add(guiState, `${prefix}OffsetX`, -5, 5, 0.01).name('Offset X').onChange(() => applyGuiToMaterial(guiState.material)));
-    section.transforms.push(section.folder.add(guiState, `${prefix}OffsetY`, -5, 5, 0.01).name('Offset Y').onChange(() => applyGuiToMaterial(guiState.material)));
-    section.transforms.push(section.folder.add(guiState, `${prefix}Rotation`, -Math.PI, Math.PI, 0.01).name('Rotation').onChange(() => applyGuiToMaterial(guiState.material)));
+    // On ne rajoute plus les contrôleurs de transform ici
     if (prefix === 'normal') {
         section.transforms.push(section.folder.add(guiState, `normalIntensity`, 0, 5, 0.01).name('Intensity').onChange(() => applyGuiToMaterial(guiState.material)));
     }
