@@ -6,12 +6,94 @@ const materialsAPI = window.__materialsAPI__ || {};
 function getMaterialsConfig() { return window.__materialsAPI__.materialsConfig; }
 function setMaterialsConfig(v) { window.__materialsAPI__.materialsConfig = v; }
 
+
+
 const gui = new dat.GUI({ name: 'Materials' });
+// Contrôle l'ouverture du panneau dat.GUI
+const isGuiOpen = true; // Mettre à false pour cacher le GUI par défaut
+// Contrôle l'ouverture du menu Camera
+const isCameraMenuOpen = false; // Mettre à false pour fermer le menu Camera par défaut
+// Ouvre ou ferme le panneau principal selon isGuiOpen
+gui.domElement.style.display = isGuiOpen ? '' : 'none';
 // Ensure GUI is visible above canvas/controls
 gui.domElement.style.zIndex = '1000';
 gui.domElement.style.position = 'fixed';
 gui.domElement.style.top = '10px';
 gui.domElement.style.right = '10px';
+
+// Camera controls
+const camFolder = gui.addFolder('Camera');
+const camState = { fov: 15, zoom: 1, zoomMin: 0.1, zoomMax: 5, zoomSpeed: 1, yawDeg: 0, pitchDeg: 0, distance: 10, tgtX: 0, tgtY: 0, tgtZ: 0 };
+
+function syncCameraStateFromScene() {
+    camState.fov = window.__cameraAPI__?.camera?.fov ?? camState.fov;
+    const c = window.__cameraAPI__?.camera;
+    const ct = window.__cameraAPI__?.controls;
+    if (c) { camState.zoom = c.zoom; }
+    if (window.__cameraAPI__) {
+        const cfg = window.__cameraAPI__.getCameraCurrentConfig();
+        camState.zoomMin = cfg.zoomMin ?? camState.zoomMin;
+        camState.zoomMax = cfg.zoomMax ?? camState.zoomMax;
+        camState.zoomSpeed = cfg.zoomSpeed ?? camState.zoomSpeed;
+        camState.yawDeg = cfg.yawDeg ?? camState.yawDeg;
+        camState.pitchDeg = cfg.pitchDeg ?? camState.pitchDeg;
+        camState.distance = cfg.distance ?? camState.distance;
+    }
+    if (ct) { camState.tgtX = ct.target.x; camState.tgtY = ct.target.y; camState.tgtZ = ct.target.z; }
+}
+
+function applyCameraFromState() {
+    const cfg = { fov: camState.fov, zoom: camState.zoom, zoomMin: camState.zoomMin, zoomMax: camState.zoomMax, zoomSpeed: camState.zoomSpeed, yawDeg: camState.yawDeg, pitchDeg: camState.pitchDeg, distance: camState.distance, target: { x: camState.tgtX, y: camState.tgtY, z: camState.tgtZ } };
+    window.__cameraAPI__?.applyCameraConfig(cfg);
+}
+
+syncCameraStateFromScene();
+
+camFolder.add(camState, 'fov', 5, 120, 1).name('FOV').onChange(applyCameraFromState);
+camFolder.add(camState, 'zoom', 0.1, 5, 0.01).name('Zoom').onChange(applyCameraFromState);
+camFolder.add(camState, 'zoomMin', 0.01, 10, 0.01).name('Zoom Min').onChange(applyCameraFromState);
+camFolder.add(camState, 'zoomMax', 0.01, 10, 0.01).name('Zoom Max').onChange(applyCameraFromState);
+camFolder.add(camState, 'zoomSpeed', 0.01, 10, 0.01).name('Zoom Speed').onChange(applyCameraFromState);
+camFolder.add(camState, 'yawDeg', -180, 180, 0.1).name('Yaw (deg)').onChange(applyCameraFromState);
+camFolder.add(camState, 'pitchDeg', -89.9, 89.9, 0.1).name('Pitch (deg)').onChange(applyCameraFromState);
+camFolder.add(camState, 'distance', 0.1, 100, 0.01).name('Distance').onChange(applyCameraFromState);
+camFolder.add(camState, 'tgtX', -100, 100, 0.01).name('Target X').onChange(applyCameraFromState);
+camFolder.add(camState, 'tgtY', -100, 100, 0.01).name('Target Y').onChange(applyCameraFromState);
+camFolder.add(camState, 'tgtZ', -100, 100, 0.01).name('Target Z').onChange(applyCameraFromState);
+
+const camActions = {
+    ExportCamera: () => {
+        const cfg = { fov: camState.fov, zoom: camState.zoom, zoomMin: camState.zoomMin, zoomMax: camState.zoomMax, zoomSpeed: camState.zoomSpeed, yawDeg: camState.yawDeg, pitchDeg: camState.pitchDeg, distance: camState.distance, target: { x: camState.tgtX, y: camState.tgtY, z: camState.tgtZ } };
+        window.__cameraAPI__?.saveCameraConfig(cfg).then(() => console.log('Camera saved')).catch((e) => console.error('Camera save failed', e));
+    }
+};
+camFolder.add(camActions, 'ExportCamera').name('Export camera');
+if (isCameraMenuOpen) {
+    camFolder.open();
+} else {
+    camFolder.close();
+}
+
+// Auto-sync camera controls with OrbitControls changes (throttled)
+let __lastCamSig = '';
+function maybeUpdateCameraGui() {
+    if (!window.__cameraAPI__) return;
+    const c = window.__cameraAPI__.camera;
+    const ct = window.__cameraAPI__.controls;
+    if (!c || !ct) return;
+    const sig = `${c.fov.toFixed(4)}|${c.zoom.toFixed(4)}|${c.position.x.toFixed(4)},${c.position.y.toFixed(4)},${c.position.z.toFixed(4)}|${ct.target.x.toFixed(4)},${ct.target.y.toFixed(4)},${ct.target.z.toFixed(4)}`;
+    if (sig === __lastCamSig) return;
+    __lastCamSig = sig;
+    syncCameraStateFromScene();
+    updateAllControllersDisplay(camFolder);
+}
+
+function onControlsChange() { maybeUpdateCameraGui(); }
+if (window.__cameraAPI__ && window.__cameraAPI__.controls) {
+    window.__cameraAPI__.controls.addEventListener('change', onControlsChange);
+}
+
+
 const guiState = {
     material: 'White',
     color: '#ffffff',
@@ -227,73 +309,7 @@ texturesFolder.open();
 rebuildAllMapSections();
 refreshTextureList();
 
-// Camera controls
-const camFolder = gui.addFolder('Camera');
-const camState = { fov: 15, zoom: 1, zoomMin: 0.1, zoomMax: 5, zoomSpeed: 1, yawDeg: 0, pitchDeg: 0, distance: 10, tgtX: 0, tgtY: 0, tgtZ: 0 };
 
-function syncCameraStateFromScene() {
-    camState.fov = window.__cameraAPI__?.camera?.fov ?? camState.fov;
-    const c = window.__cameraAPI__?.camera;
-    const ct = window.__cameraAPI__?.controls;
-    if (c) { camState.zoom = c.zoom; }
-    if (window.__cameraAPI__) {
-        const cfg = window.__cameraAPI__.getCameraCurrentConfig();
-        camState.zoomMin = cfg.zoomMin ?? camState.zoomMin;
-        camState.zoomMax = cfg.zoomMax ?? camState.zoomMax;
-        camState.zoomSpeed = cfg.zoomSpeed ?? camState.zoomSpeed;
-        camState.yawDeg = cfg.yawDeg ?? camState.yawDeg;
-        camState.pitchDeg = cfg.pitchDeg ?? camState.pitchDeg;
-        camState.distance = cfg.distance ?? camState.distance;
-    }
-    if (ct) { camState.tgtX = ct.target.x; camState.tgtY = ct.target.y; camState.tgtZ = ct.target.z; }
-}
-
-function applyCameraFromState() {
-    const cfg = { fov: camState.fov, zoom: camState.zoom, zoomMin: camState.zoomMin, zoomMax: camState.zoomMax, zoomSpeed: camState.zoomSpeed, yawDeg: camState.yawDeg, pitchDeg: camState.pitchDeg, distance: camState.distance, target: { x: camState.tgtX, y: camState.tgtY, z: camState.tgtZ } };
-    window.__cameraAPI__?.applyCameraConfig(cfg);
-}
-
-syncCameraStateFromScene();
-
-camFolder.add(camState, 'fov', 5, 120, 1).name('FOV').onChange(applyCameraFromState);
-camFolder.add(camState, 'zoom', 0.1, 5, 0.01).name('Zoom').onChange(applyCameraFromState);
-camFolder.add(camState, 'zoomMin', 0.01, 10, 0.01).name('Zoom Min').onChange(applyCameraFromState);
-camFolder.add(camState, 'zoomMax', 0.01, 10, 0.01).name('Zoom Max').onChange(applyCameraFromState);
-camFolder.add(camState, 'zoomSpeed', 0.01, 10, 0.01).name('Zoom Speed').onChange(applyCameraFromState);
-camFolder.add(camState, 'yawDeg', -180, 180, 0.1).name('Yaw (deg)').onChange(applyCameraFromState);
-camFolder.add(camState, 'pitchDeg', -89.9, 89.9, 0.1).name('Pitch (deg)').onChange(applyCameraFromState);
-camFolder.add(camState, 'distance', 0.1, 100, 0.01).name('Distance').onChange(applyCameraFromState);
-camFolder.add(camState, 'tgtX', -100, 100, 0.01).name('Target X').onChange(applyCameraFromState);
-camFolder.add(camState, 'tgtY', -100, 100, 0.01).name('Target Y').onChange(applyCameraFromState);
-camFolder.add(camState, 'tgtZ', -100, 100, 0.01).name('Target Z').onChange(applyCameraFromState);
-
-const camActions = {
-    ExportCamera: () => {
-        const cfg = { fov: camState.fov, zoom: camState.zoom, zoomMin: camState.zoomMin, zoomMax: camState.zoomMax, zoomSpeed: camState.zoomSpeed, yawDeg: camState.yawDeg, pitchDeg: camState.pitchDeg, distance: camState.distance, target: { x: camState.tgtX, y: camState.tgtY, z: camState.tgtZ } };
-        window.__cameraAPI__?.saveCameraConfig(cfg).then(() => console.log('Camera saved')).catch((e) => console.error('Camera save failed', e));
-    }
-};
-camFolder.add(camActions, 'ExportCamera').name('Export camera');
-camFolder.open();
-
-// Auto-sync camera controls with OrbitControls changes (throttled)
-let __lastCamSig = '';
-function maybeUpdateCameraGui() {
-    if (!window.__cameraAPI__) return;
-    const c = window.__cameraAPI__.camera;
-    const ct = window.__cameraAPI__.controls;
-    if (!c || !ct) return;
-    const sig = `${c.fov.toFixed(4)}|${c.zoom.toFixed(4)}|${c.position.x.toFixed(4)},${c.position.y.toFixed(4)},${c.position.z.toFixed(4)}|${ct.target.x.toFixed(4)},${ct.target.y.toFixed(4)},${ct.target.z.toFixed(4)}`;
-    if (sig === __lastCamSig) return;
-    __lastCamSig = sig;
-    syncCameraStateFromScene();
-    updateAllControllersDisplay(camFolder);
-}
-
-function onControlsChange() { maybeUpdateCameraGui(); }
-if (window.__cameraAPI__ && window.__cameraAPI__.controls) {
-    window.__cameraAPI__.controls.addEventListener('change', onControlsChange);
-}
 // Export button
 const exportParams = { Export: () => {
     const config = getMaterialsConfig();
