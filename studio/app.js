@@ -194,28 +194,7 @@ function loadModelFromUrl(url) {
     });
 }
 
-// Buttons -> materials
-document.getElementById('btn-blue').addEventListener('click', () => {
-    applyMaterialByName('Blue');
-    // Synchroniser datGUI avec le matériau appliqué (sans changer la sélection)
-    if (window.__materialsGUI__ && typeof window.__materialsGUI__.syncGuiFromCurrentMaterial === 'function') {
-        window.__materialsGUI__.syncGuiFromCurrentMaterial('Blue');
-    }
-});
-document.getElementById('btn-white').addEventListener('click', () => {
-    applyMaterialByName('White');
-    // Synchroniser datGUI avec le matériau appliqué (sans changer la sélection)
-    if (window.__materialsGUI__ && typeof window.__materialsGUI__.syncGuiFromCurrentMaterial === 'function') {
-        window.__materialsGUI__.syncGuiFromCurrentMaterial('White');
-    }
-});
-document.getElementById('btn-red').addEventListener('click', () => {
-    applyMaterialByName('Red');
-    // Synchroniser datGUI avec le matériau appliqué (sans changer la sélection)
-    if (window.__materialsGUI__ && typeof window.__materialsGUI__.syncGuiFromCurrentMaterial === 'function') {
-        window.__materialsGUI__.syncGuiFromCurrentMaterial('Red');
-    }
-});
+// Buttons -> materials (removed - buttons no longer exist in HTML)
 
 // Animation loop
 function animate() {

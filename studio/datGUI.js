@@ -3,9 +3,18 @@
 // Expect globals: window.__materialsAPI__
 const materialsAPI = window.__materialsAPI__ || {};
 
-function getMaterialsConfig() { return window.__materialsAPI__.materialsConfig; }
-function setMaterialsConfig(v) { window.__materialsAPI__.materialsConfig = v; }
-
+function getMaterialsConfig() {
+    if (!window.__materialsAPI__) {
+        console.warn('Materials API not yet available, returning empty config');
+        return {};
+    }
+    return window.__materialsAPI__.materialsConfig;
+}
+function setMaterialsConfig(v) {
+    if (window.__materialsAPI__) {
+        window.__materialsAPI__.materialsConfig = v;
+    }
+}
 
 
 const gui = new dat.GUI({ name: 'Materials' });
@@ -169,26 +178,26 @@ function syncGuiFromMaterial(name) {
     const textureTransformOffsetX = typeof def.TextureTransform_OffsetX === 'number' ? def.TextureTransform_OffsetX : 0;
     const textureTransformOffsetY = typeof def.TextureTransform_OffsetY === 'number' ? def.TextureTransform_OffsetY : 0;
     const textureTransformRotation = typeof def.TextureTransform_Rotation === 'number' ? def.TextureTransform_Rotation : 0;
-    
+
     // Appliquer les mêmes valeurs à tous les types de textures
     guiState.albedoScaleX = textureTransformScaleX;
     guiState.albedoScaleY = textureTransformScaleY;
     guiState.albedoOffsetX = textureTransformOffsetX;
     guiState.albedoOffsetY = textureTransformOffsetY;
     guiState.albedoRotation = textureTransformRotation;
-    
+
     guiState.normalScaleX = textureTransformScaleX;
     guiState.normalScaleY = textureTransformScaleY;
     guiState.normalOffsetX = textureTransformOffsetX;
     guiState.normalOffsetY = textureTransformOffsetY;
     guiState.normalRotation = textureTransformRotation;
-    
+
     guiState.roughnessScaleX = textureTransformScaleX;
     guiState.roughnessScaleY = textureTransformScaleY;
     guiState.roughnessOffsetX = textureTransformOffsetX;
     guiState.roughnessOffsetY = textureTransformOffsetY;
     guiState.roughnessRotation = textureTransformRotation;
-    
+
     guiState.metalnessScaleX = textureTransformScaleX;
     guiState.metalnessScaleY = textureTransformScaleY;
     guiState.metalnessOffsetX = textureTransformOffsetX;
@@ -206,13 +215,13 @@ function applyGuiToMaterial(name) {
     // }
     const config = getMaterialsConfig();
     if (!config) return;
-    
+
     // Vérifier que le matériau existe encore
     if (!config[name]) {
         console.warn(`Material "${name}" not found in configuration, cannot apply changes`);
         return;
     }
-    
+
     const prev = config[name] || {};
     config[name] = {
         color: guiState.color,
@@ -236,10 +245,10 @@ function applyGuiToMaterial(name) {
     };
     setMaterialsConfig(config);
     if (materialsAPI.materialCacheByName) materialsAPI.materialCacheByName.delete(name);
-    
-    // IMPORTANT : Appliquer le matériau modifié pour voir les changements en temps réel
-    // Mais sans changer quel matériau est "sélectionné" dans l'interface
-    if (materialsAPI.applyMaterialByName) materialsAPI.applyMaterialByName(name);
+
+    // DÉSACTIVÉ : Ne plus appliquer automatiquement le matériau à la vue 3D
+    // Les modifications sont sauvegardées dans la configuration mais pas appliquées
+    // L'utilisateur doit utiliser les boutons HTML pour appliquer les matériaux
 }
 
 const matFolder = gui.addFolder('Material');
@@ -248,7 +257,7 @@ const matFolder = gui.addFolder('Material');
 let materialSelector = null;
 function createMaterialSelector() {
     const config = getMaterialsConfig();
-    
+
     // Récupérer dynamiquement les noms des matériaux depuis materials.json
     // S'il n'y a pas de configuration, utiliser un matériau par défaut
     let materialNames = [];
@@ -259,12 +268,12 @@ function createMaterialSelector() {
         materialNames = ['Default'];
         console.warn('No materials loaded from materials.json, using fallback');
     }
-    
+
     if (materialSelector) {
         // Supprimer l'ancien sélecteur s'il existe
         try { matFolder.remove(materialSelector); } catch (e) {}
     }
-    
+
     materialSelector = matFolder.add(guiState, 'material', materialNames).name('Select').onChange((name) => {
         syncGuiFromMaterial(name);
         // Désactivé : ne plus appliquer automatiquement le matériau à l'objet 3D
@@ -272,8 +281,7 @@ function createMaterialSelector() {
     });
 }
 
-// Initialiser le sélecteur
-createMaterialSelector();
+// Le sélecteur sera initialisé par initializeGUI() quand l'API sera disponible
 
 // Champ de renommage du matériau
 matFolder.add(guiState, 'newMaterialName').name('Rename').onChange((newName) => {
@@ -317,13 +325,13 @@ function buildOptionsObject() {
 function setTextureValue(targetKey, url) {
     const config = getMaterialsConfig() || {};
     const name = guiState.material;
-    
+
     // Vérifier que le matériau existe encore
     if (!config[name]) {
         console.warn(`Material "${name}" not found in configuration, cannot set texture`);
         return;
     }
-    
+
     if (!config[name]) config[name] = {};
     if (url) {
         config[name][targetKey] = url;
@@ -333,10 +341,10 @@ function setTextureValue(targetKey, url) {
     setMaterialsConfig(config);
     guiState[targetKey] = url || '';
     if (materialsAPI.materialCacheByName) materialsAPI.materialCacheByName.delete(name);
-    
-    // IMPORTANT : Appliquer le matériau modifié pour voir les changements de textures en temps réel
-    if (materialsAPI.applyMaterialByName) materialsAPI.applyMaterialByName(name);
-    
+
+    // DÉSACTIVÉ : Ne plus appliquer automatiquement le matériau à la vue 3D
+    // Les modifications de textures sont sauvegardées mais pas appliquées
+
     const prefix = targetKey.replace('Map','');
     if (mapSections[prefix]) rebuildMapSection(prefix);
 }
@@ -411,19 +419,19 @@ refreshTextureList();
 // Fonction pour renommer un matériau dans la configuration
 function renameMaterialInConfig(config, oldName, newName) {
     if (!config || !oldName || !newName || oldName === newName) return config;
-    
+
     // Vérifier que le nouveau nom n'existe pas déjà
     if (config[newName]) {
         console.warn(`Material name "${newName}" already exists. Rename cancelled.`);
         return config;
     }
-    
+
     // Copier le matériau avec le nouveau nom
     config[newName] = { ...config[oldName] };
-    
+
     // Supprimer l'ancien nom
     delete config[oldName];
-    
+
     console.log(`Material "${oldName}" renamed to "${newName}"`);
     return config;
 }
@@ -432,26 +440,26 @@ function renameMaterialInConfig(config, oldName, newName) {
 const exportParams = { Export: () => {
     const config = getMaterialsConfig();
     if (!config) return;
-    
+
     // Vérifier s'il y a un renommage à effectuer
     const currentMaterial = guiState.material;
     const newName = guiState.newMaterialName.trim();
-    
+
     if (newName && newName !== currentMaterial) {
         // Renommer le matériau avant l'export
         const updatedConfig = renameMaterialInConfig(config, currentMaterial, newName);
         if (updatedConfig) {
             // Mettre à jour la configuration en mémoire
             setMaterialsConfig(updatedConfig);
-            
+
             // Mettre à jour l'interface
             guiState.material = newName;
-            
+
             // Mettre à jour les options du sélecteur
             updateMaterialSelectorOptions();
         }
     }
-    
+
     // Exporter la configuration (mise à jour si renommage effectué)
     const configToExport = getMaterialsConfig();
     fetch('../materials/materials.json', {
@@ -464,10 +472,10 @@ const exportParams = { Export: () => {
         // Force reload materials.json to verify write worked and update in-memory config
         const fresh = await fetch('../materials/materials.json?ts=' + Date.now(), { cache: 'no-store' }).then(r => r.json());
         setMaterialsConfig(fresh);
-        
+
         // Réinitialiser le champ de renommage après sauvegarde
         guiState.newMaterialName = '';
-        
+
         // Mettre à jour le sélecteur avec les nouveaux noms de matériaux
         updateMaterialSelectorOptions();
     }).catch((err) => {
@@ -485,7 +493,7 @@ function syncGuiFromCurrentMaterial(currentMaterialName) {
         console.warn(`Material "${currentMaterialName}" not found in configuration`);
         return;
     }
-    
+
     // Synchroniser les valeurs SANS changer guiState.material
     // pour que le menu "Select" garde sa sélection actuelle
     guiState.newMaterialName = currentMaterialName; // Initialiser le champ de renommage avec le nom actuel
@@ -500,41 +508,41 @@ function syncGuiFromCurrentMaterial(currentMaterialName) {
     guiState.roughnessMap = def.roughnessMap || '';
     guiState.metalnessMap = def.metalnessMap || '';
     guiState.alphaMap = def.alphaMap || '';
-    
+
     // Utiliser les paramètres TextureTransform unifiés
     const textureTransformScaleX = typeof def.TextureTransform_ScaleX === 'number' ? def.TextureTransform_ScaleX : 1;
     const textureTransformScaleY = typeof def.TextureTransform_ScaleY === 'number' ? def.TextureTransform_ScaleY : 1;
     const textureTransformOffsetX = typeof def.TextureTransform_OffsetX === 'number' ? def.TextureTransform_OffsetX : 0;
     const textureTransformOffsetY = typeof def.TextureTransform_OffsetY === 'number' ? def.TextureTransform_OffsetY : 0;
     const textureTransformRotation = typeof def.TextureTransform_Rotation === 'number' ? def.TextureTransform_Rotation : 0;
-    
+
     // Appliquer les mêmes valeurs à tous les types de textures
     guiState.albedoScaleX = textureTransformScaleX;
     guiState.albedoScaleY = textureTransformScaleY;
     guiState.albedoOffsetX = textureTransformOffsetX;
     guiState.albedoOffsetY = textureTransformOffsetY;
     guiState.albedoRotation = textureTransformRotation;
-    
+
     guiState.normalScaleX = textureTransformScaleX;
     guiState.normalScaleY = textureTransformScaleY;
     guiState.normalOffsetX = textureTransformOffsetX;
     guiState.normalOffsetY = textureTransformOffsetY;
     guiState.normalRotation = textureTransformRotation;
-    
+
     guiState.roughnessScaleX = textureTransformScaleX;
     guiState.roughnessScaleY = textureTransformScaleY;
     guiState.roughnessOffsetX = textureTransformOffsetX;
     guiState.roughnessOffsetY = textureTransformOffsetY;
     guiState.roughnessRotation = textureTransformRotation;
-    
+
     guiState.metalnessScaleX = textureTransformScaleX;
     guiState.metalnessScaleY = textureTransformScaleY;
     guiState.metalnessOffsetX = textureTransformOffsetX;
     guiState.metalnessOffsetY = textureTransformOffsetY;
     guiState.metalnessRotation = textureTransformRotation;
-    
+
     guiState.normalIntensity = typeof def.normalIntensity === 'number' ? def.normalIntensity : 1;
-    
+
     // Reconstruire les sections de textures et mettre à jour l'affichage
     rebuildAllMapSections();
     updateAllControllersDisplay(gui);
@@ -553,8 +561,28 @@ window.__materialsGUI__ = {
     updateMaterialSelectorOptions
 };
 
-// Mettre à jour le sélecteur après le chargement initial
-setTimeout(() => {
-    updateMaterialSelectorOptions();
-}, 100);
+// Fonction d'initialisation qui attend que l'API soit disponible ET que les matériaux soient chargés
+function initializeGUI() {
+    if (window.__materialsAPI__) {
+        const config = getMaterialsConfig();
+        
+        // Vérifier que les matériaux sont effectivement chargés
+        if (config && Object.keys(config).length > 0) {
+            // Mettre à jour le sélecteur après le chargement initial
+            updateMaterialSelectorOptions();
+            console.log('GUI initialized successfully with materials:', Object.keys(config));
+        } else {
+            // Les matériaux ne sont pas encore chargés, réessayer dans 100ms
+            console.log('Materials not yet loaded, retrying...');
+            setTimeout(initializeGUI, 100);
+        }
+    } else {
+        // L'API n'est pas encore disponible, réessayer dans 100ms
+        console.log('Materials API not yet available, retrying...');
+        setTimeout(initializeGUI, 100);
+    }
+}
+
+// Démarrer l'initialisation
+initializeGUI();
 

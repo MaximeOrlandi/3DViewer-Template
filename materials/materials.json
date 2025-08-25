@@ -1,18 +1,20 @@
 ﻿{
-  "Blue": {
-    "color": "#003cff",
-    "emissive": "#000000",
-    "roughness": 0.2,
-    "metalness": 1
-  },
   "Red": {
-    "color": "#e61a1a",
+    "color": "#da8989",
     "emissive": "#000000",
     "roughness": 0.03,
-    "metalness": 1
+    "metalness": 1,
+    "backfaceCulling": true,
+    "alpha": 1,
+    "TextureTransform_ScaleX": 1,
+    "TextureTransform_ScaleY": 1,
+    "TextureTransform_OffsetX": 0,
+    "TextureTransform_OffsetY": 0,
+    "TextureTransform_Rotation": 0,
+    "normalIntensity": 1
   },
   "noise_white": {
-    "color": "#8ab3dd",
+    "color": "#4c80bc",
     "emissive": "#000000",
     "roughness": 0.6,
     "metalness": 0,
@@ -27,5 +29,21 @@
     "TextureTransform_OffsetY": 0,
     "TextureTransform_Rotation": 0,
     "normalIntensity": 1
+  },
+  "Blue_Base": {
+    "color": "#1a66f6",
+    "emissive": "#000000",
+    "roughness": 0.08,
+    "metalness": 0.8300000000000001,
+    "backfaceCulling": true,
+    "alpha": 1,
+    "albedoMap": "../materials/textures/noise.png",
+    "normalMap": "../materials/textures/noise_nm.png",
+    "TextureTransform_ScaleX": 6,
+    "TextureTransform_ScaleY": 6,
+    "TextureTransform_OffsetX": 0,
+    "TextureTransform_OffsetY": 0,
+    "TextureTransform_Rotation": 0,
+    "normalIntensity": 5
   }
 }
