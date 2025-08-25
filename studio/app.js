@@ -23,58 +23,98 @@ function loadMaterialsConfig() {
 
 function loadAndApplyMaps(material, definition) {
     if (!definition) return;
+    
     const cacheBust = '?ts=' + Date.now();
+    let texturesToLoad = 0;
+    let texturesLoaded = 0;
+    
+    // Compter le nombre de textures à charger
+    if (definition.albedoMap) texturesToLoad++;
+    if (definition.normalMap) texturesToLoad++;
+    if (definition.roughnessMap) texturesToLoad++;
+    if (definition.metalnessMap) texturesToLoad++;
+    if (definition.alphaMap) texturesToLoad++;
+    
+    // Fonction pour appliquer les transformations une fois toutes les textures chargées
+    const applyTransformsWhenReady = () => {
+        texturesLoaded++;
+        if (texturesLoaded >= texturesToLoad) {
+            // Toutes les textures sont chargées, appliquer les transformations
+            if (material.map) {
+                applyTextureTransformFor(material.map, definition, 'albedo');
+            }
+            if (material.normalMap) {
+                applyTextureTransformFor(material.normalMap, definition, 'normal');
+            }
+            if (material.roughnessMap) {
+                applyTextureTransformFor(material.roughnessMap, definition, 'roughness');
+            }
+            if (material.metalnessMap) {
+                applyTextureTransformFor(material.metalnessMap, definition, 'metalness');
+            }
+            if (material.alphaMap) {
+                applyTextureTransformFor(material.alphaMap, definition, 'alpha');
+            }
+            material.needsUpdate = true;
+        }
+    };
+    
     if (definition.albedoMap) {
         textureLoader.load(definition.albedoMap + cacheBust, (tex) => {
             tex.encoding = THREE.sRGBEncoding;
             material.map = tex;
-            tex.wrapS = THREE.RepeatWrapping; tex.wrapT = THREE.RepeatWrapping;
-            applyTextureTransformFor(tex, definition, 'albedo');
-            material.needsUpdate = true;
+            tex.wrapS = THREE.RepeatWrapping; 
+            tex.wrapT = THREE.RepeatWrapping;
+            applyTransformsWhenReady();
         });
     } else {
         material.map = null;
+        if (texturesToLoad === 0) applyTransformsWhenReady();
     }
+    
     if (definition.normalMap) {
         textureLoader.load(definition.normalMap + cacheBust, (tex) => {
             material.normalMap = tex;
-            tex.wrapS = THREE.RepeatWrapping; tex.wrapT = THREE.RepeatWrapping;
-            applyTextureTransformFor(tex, definition, 'normal');
+            tex.wrapS = THREE.RepeatWrapping; 
+            tex.wrapT = THREE.RepeatWrapping;
             // Apply normal intensity if provided
             const k = (typeof definition.normalIntensity === 'number') ? definition.normalIntensity : 1;
             if (material.normalScale) material.normalScale.set(k, k);
-            material.needsUpdate = true;
+            applyTransformsWhenReady();
         });
     } else {
         material.normalMap = null;
     }
+    
     if (definition.roughnessMap) {
         textureLoader.load(definition.roughnessMap + cacheBust, (tex) => {
             material.roughnessMap = tex;
-            tex.wrapS = THREE.RepeatWrapping; tex.wrapT = THREE.RepeatWrapping;
-            applyTextureTransformFor(tex, definition, 'roughness');
-            material.needsUpdate = true;
+            tex.wrapS = THREE.RepeatWrapping; 
+            tex.wrapT = THREE.RepeatWrapping;
+            applyTransformsWhenReady();
         });
     } else {
         material.roughnessMap = null;
     }
+    
     if (definition.metalnessMap) {
         textureLoader.load(definition.metalnessMap + cacheBust, (tex) => {
             material.metalnessMap = tex;
-            tex.wrapS = THREE.RepeatWrapping; tex.wrapT = THREE.RepeatWrapping;
-            applyTextureTransformFor(tex, definition, 'metalness');
-            material.needsUpdate = true;
+            tex.wrapS = THREE.RepeatWrapping; 
+            tex.wrapT = THREE.RepeatWrapping;
+            applyTransformsWhenReady();
         });
     } else {
         material.metalnessMap = null;
     }
+    
     if (definition.alphaMap) {
         textureLoader.load(definition.alphaMap + cacheBust, (tex) => {
             material.alphaMap = tex;
-            tex.wrapS = THREE.RepeatWrapping; tex.wrapT = THREE.RepeatWrapping;
-            applyTextureTransformFor(tex, definition, 'alpha');
+            tex.wrapS = THREE.RepeatWrapping; 
+            tex.wrapT = THREE.RepeatWrapping;
             material.transparent = true;
-            material.needsUpdate = true;
+            applyTransformsWhenReady();
         });
     } else {
         material.alphaMap = null;
@@ -92,11 +132,54 @@ function applyTextureTransformFor(tex, definition, prefix) {
     const offsetY = typeof definition.TextureTransform_OffsetY === 'number' ? definition.TextureTransform_OffsetY : 0;
     const rotation = typeof definition.TextureTransform_Rotation === 'number' ? definition.TextureTransform_Rotation : 0;
     
-    tex.wrapS = THREE.RepeatWrapping; tex.wrapT = THREE.RepeatWrapping;
-    tex.repeat.set(scaleX, scaleY);
-    tex.offset.set(offsetX, offsetY);
-    tex.center.set(0.5, 0.5);
-    tex.rotation = rotation;
+    tex.wrapS = THREE.RepeatWrapping; 
+    tex.wrapT = THREE.RepeatWrapping;
+    
+    // Réinitialiser la matrice
+    tex.matrixAutoUpdate = false;
+    tex.matrix.identity();
+    
+    // Appliquer les transformations dans le bon ordre
+    if (rotation !== 0) {
+        // 1. Déplacer au centre (0.5, 0.5)
+        tex.matrix.translate(0.5, 0.5, 0);
+        // 2. Appliquer la rotation
+        tex.matrix.rotateZ(rotation);
+        // 3. Revenir à l'origine
+        tex.matrix.translate(-0.5, -0.5, 0);
+    }
+    
+    // 4. Appliquer l'offset
+    tex.matrix.translate(offsetX, offsetY, 0);
+    // 5. Appliquer le scale
+    tex.matrix.scale(scaleX, scaleY, 1);
+    
+    tex.needsUpdate = true;
+}
+
+// Nouvelle fonction pour appliquer les transformations en temps réel
+function applyTextureTransformRealtime(tex, scaleX, scaleY, offsetX, offsetY, rotation) {
+    if (!tex) return;
+    
+    // Réinitialiser la matrice
+    tex.matrixAutoUpdate = false;
+    tex.matrix.identity();
+    
+    // Appliquer les transformations dans le bon ordre
+    if (rotation !== 0) {
+        // 1. Déplacer au centre (0.5, 0.5)
+        tex.matrix.translate(0.5, 0.5, 0);
+        // 2. Appliquer la rotation
+        tex.matrix.rotateZ(rotation);
+        // 3. Revenir à l'origine
+        tex.matrix.translate(-0.5, -0.5, 0);
+    }
+    
+    // 4. Appliquer l'offset
+    tex.matrix.translate(offsetX, offsetY, 0);
+    // 5. Appliquer le scale
+    tex.matrix.scale(scaleX, scaleY, 1);
+    
     tex.needsUpdate = true;
 }
 
@@ -120,12 +203,6 @@ function createMaterialFromDefinition(definition) {
     material.envMapIntensity = currentEnvIntensity;
     material.needsUpdate = true;
     loadAndApplyMaps(material, definition);
-    // Apply transforms for any maps that are already present
-    applyTextureTransformFor(material.map, definition, 'albedo');
-    applyTextureTransformFor(material.normalMap, definition, 'normal');
-    applyTextureTransformFor(material.roughnessMap, definition, 'roughness');
-    applyTextureTransformFor(material.metalnessMap, definition, 'metalness');
-    applyTextureTransformFor(material.alphaMap, definition, 'alpha');
     // Apply normal intensity if normal map exists
     if (material.normalMap) {
         const k = (typeof definition.normalIntensity === 'number') ? definition.normalIntensity : 1;
@@ -146,14 +223,29 @@ function getOrCreateMaterialByName(materialName) {
 
 function applyMaterialByName(materialName) {
     if (!window.loadedModel) return;
-    const mat = getOrCreateMaterialByName(materialName);
-    if (!mat) return;
-    selectedMaterialName = materialName;
-    window.loadedModel.traverse((child) => {
-        if (child.isMesh) {
-            child.material = mat;
+    
+    // Si assetsManager est disponible, utiliser le système de slots
+    if (window.assetsManager && window.assetsManager.getCurrentObject) {
+        const currentObject = window.assetsManager.getCurrentObject();
+        if (currentObject && currentObject.materials) {
+            // Appliquer le matériau aux slots qui l'utilisent
+            Object.entries(currentObject.materials).forEach(([slotIndex, matName]) => {
+                if (matName === materialName) {
+                    applyMaterialToSlot(materialName, parseInt(slotIndex));
+                }
+            });
         }
-    });
+    } else {
+        // Fallback : appliquer partout si assetsManager n'est pas disponible
+        const mat = getOrCreateMaterialByName(materialName);
+        if (!mat) return;
+        selectedMaterialName = materialName;
+        window.loadedModel.traverse((child) => {
+            if (child.isMesh) {
+                child.material = mat;
+            }
+        });
+    }
 }
 
 // GLB loading
@@ -216,13 +308,169 @@ Promise.resolve()
     .then(() => loadModelFromUrl(GLB_MODEL_URL))
     .finally(() => animate());
 
-// Export API for datGUI.js
+// Nouvelle fonction pour forcer la mise à jour des transformations sur un matériau existant
+function updateMaterialTextureTransforms(materialName) {
+    if (!materialsConfig) {
+        console.error('materialsConfig not available');
+        return;
+    }
+    
+    const def = materialsConfig[materialName];
+    if (!def) {
+        console.error('Material definition not found for:', materialName);
+        return;
+    }
+    
+    // Obtenir ou créer le matériau s'il n'existe pas dans le cache
+    let material = materialCacheByName.get(materialName);
+    if (!material) {
+        material = getOrCreateMaterialByName(materialName);
+        if (!material) {
+            console.error('Failed to create material for:', materialName);
+            return;
+        }
+    }
+    
+    // Appliquer les transformations aux textures existantes
+    if (material.map) {
+        applyTextureTransformFor(material.map, def, 'albedo');
+    }
+    if (material.normalMap) {
+        applyTextureTransformFor(material.normalMap, def, 'normal');
+    }
+    if (material.roughnessMap) {
+        applyTextureTransformFor(material.roughnessMap, def, 'roughness');
+    }
+    if (material.metalnessMap) {
+        applyTextureTransformFor(material.metalnessMap, def, 'metalness');
+    }
+    if (material.alphaMap) {
+        applyTextureTransformFor(material.alphaMap, def, 'alpha');
+    }
+    
+    material.needsUpdate = true;
+    
+    // Forcer le rendu si le matériau est actuellement appliqué
+    if (window.loadedModel && selectedMaterialName === materialName) {
+        window.loadedModel.traverse((child) => {
+            if (child.isMesh) {
+                // Si l'objet utilise le même matériau, mettre à jour ses textures
+                if (child.material === material) {
+                    child.material.needsUpdate = true;
+                } else {
+                    // Sinon, appliquer les transformations directement au matériau de l'objet
+                    // en recréant le matériau avec les nouvelles transformations
+                    const newMaterial = getOrCreateMaterialByName(materialName);
+                    if (newMaterial) {
+                        child.material = newMaterial;
+                        child.material.needsUpdate = true;
+                    }
+                }
+            }
+        });
+    }
+}
+
+// Fonction pour appliquer un matériau à un slot spécifique
+function applyMaterialToSlot(materialName, slotIndex) {
+    if (!window.loadedModel) return;
+    
+    const material = getOrCreateMaterialByName(materialName);
+    if (!material) return;
+    
+    // Trouver le sous-mesh correspondant au slot
+    let meshIndex = 0;
+    window.loadedModel.traverse((child) => {
+        if (child.isMesh) {
+            if (meshIndex === slotIndex) {
+                child.material = material;
+                child.material.needsUpdate = true;
+                
+                // FORCER l'application des transformations sauvegardées avec un délai
+                // pour s'assurer que les textures sont chargées
+                setTimeout(() => {
+                    if (materialsConfig && materialsConfig[materialName]) {
+                        const def = materialsConfig[materialName];
+                        
+                        console.log(`🔧 Applying saved transforms for ${materialName}:`, {
+                            scaleX: def.TextureTransform_ScaleX,
+                            scaleY: def.TextureTransform_ScaleY,
+                            offsetX: def.TextureTransform_OffsetX,
+                            offsetY: def.TextureTransform_OffsetY,
+                            rotation: def.TextureTransform_Rotation
+                        });
+                        
+                        // Appliquer les transformations aux textures existantes
+                        if (material.map) {
+                            applyTextureTransformFor(material.map, def, 'albedo');
+                        }
+                        if (material.normalMap) {
+                            applyTextureTransformFor(material.normalMap, def, 'normal');
+                        }
+                        if (material.roughnessMap) {
+                            applyTextureTransformFor(material.roughnessMap, def, 'roughness');
+                        }
+                        if (material.metalnessMap) {
+                            applyTextureTransformFor(material.metalnessMap, def, 'metalness');
+                        }
+                        if (material.alphaMap) {
+                            applyTextureTransformFor(material.alphaMap, def, 'alpha');
+                        }
+                        
+                        material.needsUpdate = true;
+                        child.material.needsUpdate = true;
+                        console.log(`✅ Transforms applied for ${materialName}`);
+                    }
+                }, 100); // Délai de 100ms pour s'assurer que les textures sont chargées
+            }
+            meshIndex++;
+        }
+    });
+}
+
+// Fonction pour forcer la mise à jour du matériau actuellement appliqué
+function forceMaterialUpdate(materialName) {
+    if (!window.loadedModel) return;
+    
+    // Obtenir le matériau mis à jour depuis le cache
+    const updatedMaterial = getOrCreateMaterialByName(materialName);
+    if (!updatedMaterial) return;
+    
+    // Appliquer le matériau mis à jour uniquement aux sous-meshes qui l'utilisent
+    // au lieu de l'appliquer partout
+    if (window.assetsManager && window.assetsManager.getCurrentObject) {
+        const currentObject = window.assetsManager.getCurrentObject();
+        if (currentObject && currentObject.materials) {
+            // Appliquer le matériau aux slots qui l'utilisent
+            Object.entries(currentObject.materials).forEach(([slotIndex, matName]) => {
+                if (matName === materialName) {
+                    applyMaterialToSlot(materialName, parseInt(slotIndex));
+                }
+            });
+        }
+    } else {
+        // Fallback : appliquer partout si assetsManager n'est pas disponible
+        window.loadedModel.traverse((child) => {
+            if (child.isMesh) {
+                child.material = updatedMaterial;
+                child.material.needsUpdate = true;
+            }
+        });
+    }
+    
+
+}
+
+// Exposer la fonction globalement pour datGUI
 window.__materialsAPI__ = {
     get materialsConfig() { return materialsConfig; },
     set materialsConfig(v) { materialsConfig = v; },
     get selectedMaterialName() { return selectedMaterialName; },
     materialCacheByName,
-    applyMaterialByName
+    applyMaterialByName,
+    applyMaterialToSlot,
+    updateMaterialTextureTransforms,
+    forceMaterialUpdate
 };
 
 // Camera config load/save helpers for datGUI

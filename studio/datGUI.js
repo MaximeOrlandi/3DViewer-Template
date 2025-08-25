@@ -248,25 +248,26 @@ function applyGuiToMaterial(name) {
 
 // Nouvelle fonction pour appliquer les changements au matériau visible
 function applyChangesToVisibleMaterial(modifiedMaterialName) {
-    // Vérifier si l'AssetsManager est disponible
-    if (!window.assetsManager) {
+    // Appliquer les transformations en temps réel au matériau
+    applyTextureTransformsRealtime(modifiedMaterialName);
+    
+    // Forcer la mise à jour du matériau sur l'objet 3D
+    if (window.__materialsAPI__ && window.__materialsAPI__.forceMaterialUpdate) {
+        window.__materialsAPI__.forceMaterialUpdate(modifiedMaterialName);
+    }
+}
+
+// Nouvelle fonction pour appliquer les transformations de texture en temps réel
+function applyTextureTransformsRealtime(materialName) {
+    if (!window.__materialsAPI__ || !window.__materialsAPI__.updateMaterialTextureTransforms) {
         return;
     }
     
-    // Obtenir l'objet actuellement visible
-    const currentObject = window.assetsManager.getCurrentObject();
-    if (!currentObject) {
-        return;
-    }
-    
-    // Vérifier si le matériau modifié est celui appliqué à l'objet visible
-    if (currentObject.material === modifiedMaterialName) {
-        // C'est le bon matériau, on peut l'appliquer en temps réel
-        if (window.__materialsAPI__ && window.__materialsAPI__.applyMaterialByName) {
-            window.__materialsAPI__.applyMaterialByName(modifiedMaterialName);
-        }
-    } else {
-        // Ce n'est pas le matériau visible, on ne fait que sauvegarder
+    // Utiliser l'API pour mettre à jour les transformations
+    try {
+        window.__materialsAPI__.updateMaterialTextureTransforms(materialName);
+    } catch (error) {
+        console.error('Erreur lors de l\'application des transformations:', error);
     }
 }
 
@@ -351,11 +352,26 @@ propsFolder.open();
 
 // Ajout du menu Texture Transform
 const textureTransformFolder = gui.addFolder('Texture Transform');
-textureTransformFolder.add(guiState, 'albedoScaleX', 0.01, 10, 0.01).name('Scale X').onChange(() => applyGuiToMaterial(guiState.material));
-textureTransformFolder.add(guiState, 'albedoScaleY', 0.01, 10, 0.01).name('Scale Y').onChange(() => applyGuiToMaterial(guiState.material));
-textureTransformFolder.add(guiState, 'albedoOffsetX', -5, 5, 0.01).name('Offset X').onChange(() => applyGuiToMaterial(guiState.material));
-textureTransformFolder.add(guiState, 'albedoOffsetY', -5, 5, 0.01).name('Offset Y').onChange(() => applyGuiToMaterial(guiState.material));
-textureTransformFolder.add(guiState, 'albedoRotation', -Math.PI, Math.PI, 0.01).name('Rotation').onChange(() => applyGuiToMaterial(guiState.material));
+textureTransformFolder.add(guiState, 'albedoScaleX', 0.01, 10, 0.01).name('Scale X').onChange(() => {
+    applyGuiToMaterial(guiState.material);
+    applyTextureTransformsRealtime(guiState.material);
+});
+textureTransformFolder.add(guiState, 'albedoScaleY', 0.01, 10, 0.01).name('Scale Y').onChange(() => {
+    applyGuiToMaterial(guiState.material);
+    applyTextureTransformsRealtime(guiState.material);
+});
+textureTransformFolder.add(guiState, 'albedoOffsetX', -5, 5, 0.01).name('Offset X').onChange(() => {
+    applyGuiToMaterial(guiState.material);
+    applyTextureTransformsRealtime(guiState.material);
+});
+textureTransformFolder.add(guiState, 'albedoOffsetY', -5, 5, 0.01).name('Offset Y').onChange(() => {
+    applyGuiToMaterial(guiState.material);
+    applyTextureTransformsRealtime(guiState.material);
+});
+textureTransformFolder.add(guiState, 'albedoRotation', -Math.PI, Math.PI, 0.01).name('Rotation').onChange(() => {
+    applyGuiToMaterial(guiState.material);
+    applyTextureTransformsRealtime(guiState.material);
+});
 textureTransformFolder.open();
 
 // Textures: list and selectors
