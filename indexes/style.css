@@ -45,6 +45,21 @@ body {
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
+/* État actif des boutons */
+.menu-btn.active {
+    background-color: #0055d4;
+    border-color: #0055d4;
+    color: #ffffff;
+    box-shadow: 0 4px 16px rgba(0, 85, 212, 0.3);
+}
+
+.menu-btn.active:hover {
+    background-color: #0041a8;
+    border-color: #0041a8;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 85, 212, 0.4);
+}
+
 /* Conteneur pour le rendu Three.js */
 #container {
     width: 100vw;

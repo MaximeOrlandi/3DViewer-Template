@@ -1,9 +1,9 @@
 ﻿{
-  "Red": {
-    "color": "#da8989",
+  "red": {
+    "color": "#ff0000",
     "emissive": "#000000",
     "roughness": 0.03,
-    "metalness": 1,
+    "metalness": 0.42,
     "backfaceCulling": true,
     "alpha": 1,
     "TextureTransform_ScaleX": 1,
@@ -13,7 +13,7 @@
     "TextureTransform_Rotation": 0,
     "normalIntensity": 1
   },
-  "noise_white": {
+  "white": {
     "color": "#4c80bc",
     "emissive": "#000000",
     "roughness": 0.6,
@@ -30,8 +30,8 @@
     "TextureTransform_Rotation": 0,
     "normalIntensity": 1
   },
-  "Blue_Base": {
-    "color": "#1a66f6",
+  "blue": {
+    "color": "#6993e4",
     "emissive": "#000000",
     "roughness": 0.08,
     "metalness": 0.8300000000000001,

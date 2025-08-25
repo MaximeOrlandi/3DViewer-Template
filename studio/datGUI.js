@@ -246,9 +246,71 @@ function applyGuiToMaterial(name) {
     setMaterialsConfig(config);
     if (materialsAPI.materialCacheByName) materialsAPI.materialCacheByName.delete(name);
 
-    // DÉSACTIVÉ : Ne plus appliquer automatiquement le matériau à la vue 3D
-    // Les modifications sont sauvegardées dans la configuration mais pas appliquées
-    // L'utilisateur doit utiliser les boutons HTML pour appliquer les matériaux
+    // NOUVEAU: Appliquer les modifications en temps réel au matériau actuellement visible
+    // mais seulement si c'est le matériau qui est actuellement appliqué à l'objet
+    applyChangesToVisibleMaterial(name);
+}
+
+// Nouvelle fonction pour appliquer les changements au matériau visible
+function applyChangesToVisibleMaterial(modifiedMaterialName) {
+    // Vérifier si l'AssetsManager est disponible
+    if (!window.assetsManager) {
+        console.warn('AssetsManager not available, cannot apply changes to visible material');
+        return;
+    }
+    
+    // Obtenir l'objet actuellement visible
+    const currentObject = window.assetsManager.getCurrentObject();
+    if (!currentObject) {
+        console.warn('No current object found');
+        return;
+    }
+    
+    // Vérifier si le matériau modifié est celui appliqué à l'objet visible
+    if (currentObject.material === modifiedMaterialName) {
+        // C'est le bon matériau, on peut l'appliquer en temps réel
+        if (window.__materialsAPI__ && window.__materialsAPI__.applyMaterialByName) {
+            window.__materialsAPI__.applyMaterialByName(modifiedMaterialName);
+            console.log(`Applied real-time changes to visible material: ${modifiedMaterialName}`);
+        }
+    } else {
+        // Ce n'est pas le matériau visible, on ne fait que sauvegarder
+        console.log(`Material ${modifiedMaterialName} modified but not applied (not visible on current object)`);
+    }
+}
+
+// NOUVELLE FONCTION: Sélectionner un matériau par son nom dans datGUI
+function selectMaterialByName(materialName) {
+    if (!materialSelector) {
+        console.warn('Material selector not yet initialized');
+        return false;
+    }
+    
+    // Vérifier si le matériau existe dans la configuration
+    const config = getMaterialsConfig();
+    if (!config || !config[materialName]) {
+        console.warn(`Material "${materialName}" not found in configuration`);
+        return false;
+    }
+    
+    // Mettre à jour l'état GUI
+    guiState.material = materialName;
+    
+    // Synchroniser l'interface avec le matériau sélectionné
+    syncGuiFromMaterial(materialName);
+    
+    // Mettre à jour le sélecteur visuellement
+    if (materialSelector && materialSelector.updateDisplay) {
+        materialSelector.updateDisplay();
+    }
+    
+    console.log(`✅ Matériau "${materialName}" sélectionné dans datGUI`);
+    return true;
+}
+
+// Fonction pour obtenir le matériau actuellement sélectionné dans datGUI
+function getCurrentMaterial() {
+    return guiState.material;
 }
 
 const matFolder = gui.addFolder('Material');
@@ -342,8 +404,8 @@ function setTextureValue(targetKey, url) {
     guiState[targetKey] = url || '';
     if (materialsAPI.materialCacheByName) materialsAPI.materialCacheByName.delete(name);
 
-    // DÉSACTIVÉ : Ne plus appliquer automatiquement le matériau à la vue 3D
-    // Les modifications de textures sont sauvegardées mais pas appliquées
+    // NOUVEAU: Appliquer les modifications de texture en temps réel au matériau visible
+    applyChangesToVisibleMaterial(name);
 
     const prefix = targetKey.replace('Map','');
     if (mapSections[prefix]) rebuildMapSection(prefix);
@@ -558,7 +620,9 @@ function updateMaterialSelectorOptions() {
 window.__materialsGUI__ = {
     syncGuiFromMaterial,
     syncGuiFromCurrentMaterial,
-    updateMaterialSelectorOptions
+    updateMaterialSelectorOptions,
+    selectMaterialByName,  // NOUVEAU: Sélectionner un matériau par son nom
+    getCurrentMaterial     // NOUVEAU: Obtenir le matériau actuellement sélectionné
 };
 
 // Fonction d'initialisation qui attend que l'API soit disponible ET que les matériaux soient chargés
@@ -585,4 +649,6 @@ function initializeGUI() {
 
 // Démarrer l'initialisation
 initializeGUI();
+
+// Note: Debug functions are defined in assets.js
 

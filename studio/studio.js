@@ -21,8 +21,10 @@ scene.add(modelGroup);
 const HDR_INTENSITY = 1; // 0..2 (1 = 100%)
 const HDR_YAW_DEGREES = 0; // -180..180
 const HDR_PITCH_DEGREES = 0; // -90..90
-// --- Model path (code-configurable) ---
-const GLB_MODEL_URL = '../assets/objet.glb';
+// --- Model path (configured in assets.js) ---
+// GLB_MODEL_URL is now defined globally by assets.js
+// If not available, fallback to default path
+// const GLB_MODEL_URL = window.GLB_MODEL_URL || '../assets/objet.glb';
 
 function getClampedHDRAngles() {
     const yaw = THREE.MathUtils.degToRad(THREE.MathUtils.clamp(HDR_YAW_DEGREES, -180, 180));
@@ -70,6 +72,80 @@ controls.dampingFactor = 0.05;
 controls.enablePan = false;
 controls.minDistance = 1;
 controls.maxDistance = 40;
+
+// --- Système de sélection de matériaux par clic ---
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2();
+
+// Fonction pour gérer le clic sur un objet 3D
+function onMouseClick(event) {
+    // Calculer la position de la souris en coordonnées normalisées (-1 à +1)
+    mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+    
+    // Lancer un rayon depuis la caméra vers la position de la souris
+    raycaster.setFromCamera(mouse, camera);
+    
+    // Trouver tous les objets intersectés par le rayon
+    const intersects = raycaster.intersectObjects(scene.children, true);
+    
+    if (intersects.length > 0) {
+        const clickedObject = intersects[0].object;
+        
+        // Vérifier si c'est un mesh avec un matériau
+        if (clickedObject.isMesh && clickedObject.material) {
+            console.log(`Clic sur: ${clickedObject.name} (${clickedObject.type})`);
+            
+            // Trouver le nom du matériau appliqué
+            let materialName = null;
+            
+            if (window.__materialsAPI__ && window.__materialsAPI__.materialsConfig) {
+                // Parcourir tous les matériaux pour trouver celui qui correspond
+                Object.entries(window.__materialsAPI__.materialsConfig).forEach(([name, config]) => {
+                    // Vérifier si le matériau correspond à celui de l'objet cliqué
+                    if (clickedObject.material.name === name || 
+                        clickedObject.material.uuid === window.__materialsAPI__.materialCacheByName.get(name)?.uuid) {
+                        materialName = name;
+                    }
+                });
+            }
+            
+            if (materialName) {
+                console.log(`Matériau identifié: ${materialName}`);
+                
+                // Sélectionner ce matériau dans datGUI
+                if (window.__materialsGUI__ && window.__materialsGUI__.selectMaterialByName) {
+                    window.__materialsGUI__.selectMaterialByName(materialName);
+                    console.log(`✅ Matériau "${materialName}" sélectionné dans datGUI`);
+                } else {
+                    console.warn('datGUI API not available for material selection');
+                }
+            } else {
+                console.log('Matériau non reconnu dans la configuration');
+            }
+        }
+    }
+}
+
+// Ajouter l'écouteur d'événements pour le clic
+renderer.domElement.addEventListener('click', onMouseClick, false);
+
+// Fonction pour activer/désactiver la sélection par clic
+function setClickSelectionEnabled(enabled) {
+    if (enabled) {
+        renderer.domElement.addEventListener('click', onMouseClick, false);
+        console.log('✅ Sélection par clic activée');
+    } else {
+        renderer.domElement.removeEventListener('click', onMouseClick, false);
+        console.log('❌ Sélection par clic désactivée');
+    }
+}
+
+// Exposer les fonctions globalement
+window.__clickSelectionAPI__ = {
+    setEnabled: setClickSelectionEnabled,
+    isEnabled: () => renderer.domElement.hasEventListener('click', onMouseClick)
+};
 
 // --- Smooth zoom handling (wheel) ---
 // We override wheel dolly with a smoothed distance lerp to avoid abrupt jumps

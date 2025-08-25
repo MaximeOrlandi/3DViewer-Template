@@ -176,6 +176,11 @@ function loadModelFromUrl(url) {
             applyEnvIntensityToObject3D(window.loadedModel, currentEnvIntensity);
             modelGroup.add(window.loadedModel);
 
+            // Notifier l'AssetsManager que le modèle est chargé
+            if (window.assetsManager && typeof window.assetsManager.setModelGroup === 'function') {
+                window.assetsManager.setModelGroup(window.loadedModel);
+            }
+
             if (selectedMaterialName) {
                 applyMaterialByName(selectedMaterialName);
                 // Synchroniser datGUI avec le matériau appliqué (sans changer la sélection)
