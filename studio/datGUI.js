@@ -5,7 +5,6 @@ const materialsAPI = window.__materialsAPI__ || {};
 
 function getMaterialsConfig() {
     if (!window.__materialsAPI__) {
-        console.warn('Materials API not yet available, returning empty config');
         return {};
     }
     return window.__materialsAPI__.materialsConfig;
@@ -73,7 +72,7 @@ camFolder.add(camState, 'tgtZ', -100, 100, 0.01).name('Target Z').onChange(apply
 const camActions = {
     ExportCamera: () => {
         const cfg = { fov: camState.fov, zoom: camState.zoom, zoomMin: camState.zoomMin, zoomMax: camState.zoomMax, zoomSpeed: camState.zoomSpeed, yawDeg: camState.yawDeg, pitchDeg: camState.pitchDeg, distance: camState.distance, target: { x: camState.tgtX, y: camState.tgtY, z: camState.tgtZ } };
-        window.__cameraAPI__?.saveCameraConfig(cfg).then(() => console.log('Camera saved')).catch((e) => console.error('Camera save failed', e));
+        window.__cameraAPI__?.saveCameraConfig(cfg).then(() => {}).catch((e) => {});
     }
 };
 camFolder.add(camActions, 'ExportCamera').name('Export camera');
@@ -145,17 +144,14 @@ function syncGuiFromMaterial(name) {
     const config = getMaterialsConfig();
     const def = config && config[name];
     if (!def) {
-        console.warn(`Material "${name}" not found in configuration`);
         // Si le matériau n'existe plus, sélectionner le premier disponible
         const availableMaterials = Object.keys(config || {});
         if (availableMaterials.length > 0) {
             const firstMaterial = availableMaterials[0];
-            console.log(`Switching to first available material: "${firstMaterial}"`);
             guiState.material = firstMaterial;
             syncGuiFromMaterial(firstMaterial); // Récursion pour charger le bon matériau
             return;
         } else {
-            console.error('No materials available in configuration');
             return;
         }
     }
@@ -218,7 +214,6 @@ function applyGuiToMaterial(name) {
 
     // Vérifier que le matériau existe encore
     if (!config[name]) {
-        console.warn(`Material "${name}" not found in configuration, cannot apply changes`);
         return;
     }
 
@@ -244,25 +239,23 @@ function applyGuiToMaterial(name) {
         normalIntensity: guiState.normalIntensity
     };
     setMaterialsConfig(config);
-    if (materialsAPI.materialCacheByName) materialsAPI.materialCacheByName.delete(name);
+            if (materialsAPI.materialCacheByName) materialsAPI.materialCacheByName.delete(name);
 
-    // NOUVEAU: Appliquer les modifications en temps réel au matériau actuellement visible
-    // mais seulement si c'est le matériau qui est actuellement appliqué à l'objet
-    applyChangesToVisibleMaterial(name);
-}
+        // Appliquer les modifications en temps réel au matériau actuellement visible
+        // mais seulement si c'est le matériau qui est actuellement appliqué à l'objet
+        applyChangesToVisibleMaterial(name);
+    }
 
 // Nouvelle fonction pour appliquer les changements au matériau visible
 function applyChangesToVisibleMaterial(modifiedMaterialName) {
     // Vérifier si l'AssetsManager est disponible
     if (!window.assetsManager) {
-        console.warn('AssetsManager not available, cannot apply changes to visible material');
         return;
     }
     
     // Obtenir l'objet actuellement visible
     const currentObject = window.assetsManager.getCurrentObject();
     if (!currentObject) {
-        console.warn('No current object found');
         return;
     }
     
@@ -271,25 +264,21 @@ function applyChangesToVisibleMaterial(modifiedMaterialName) {
         // C'est le bon matériau, on peut l'appliquer en temps réel
         if (window.__materialsAPI__ && window.__materialsAPI__.applyMaterialByName) {
             window.__materialsAPI__.applyMaterialByName(modifiedMaterialName);
-            console.log(`Applied real-time changes to visible material: ${modifiedMaterialName}`);
         }
     } else {
         // Ce n'est pas le matériau visible, on ne fait que sauvegarder
-        console.log(`Material ${modifiedMaterialName} modified but not applied (not visible on current object)`);
     }
 }
 
 // NOUVELLE FONCTION: Sélectionner un matériau par son nom dans datGUI
 function selectMaterialByName(materialName) {
     if (!materialSelector) {
-        console.warn('Material selector not yet initialized');
         return false;
     }
     
     // Vérifier si le matériau existe dans la configuration
     const config = getMaterialsConfig();
     if (!config || !config[materialName]) {
-        console.warn(`Material "${materialName}" not found in configuration`);
         return false;
     }
     
@@ -304,7 +293,6 @@ function selectMaterialByName(materialName) {
         materialSelector.updateDisplay();
     }
     
-    console.log(`✅ Matériau "${materialName}" sélectionné dans datGUI`);
     return true;
 }
 
@@ -328,7 +316,6 @@ function createMaterialSelector() {
     } else {
         // Fallback temporaire si aucun matériau n'est chargé
         materialNames = ['Default'];
-        console.warn('No materials loaded from materials.json, using fallback');
     }
 
     if (materialSelector) {
@@ -390,7 +377,6 @@ function setTextureValue(targetKey, url) {
 
     // Vérifier que le matériau existe encore
     if (!config[name]) {
-        console.warn(`Material "${name}" not found in configuration, cannot set texture`);
         return;
     }
 
@@ -469,7 +455,7 @@ function refreshTextureList() {
     return fetch('../materials/textures/index.json?ts=' + Date.now())
         .then((r) => r.json())
         .then((list) => { availableTextures = Array.isArray(list) ? list : []; rebuildAllMapSections(); updateAllControllersDisplay(gui); })
-        .catch((err) => { console.error('Failed to list textures', err); availableTextures = []; rebuildAllMapSections(); });
+        .catch((err) => { availableTextures = []; rebuildAllMapSections(); });
 }
 
 texturesFolder.add({ Refresh: () => refreshTextureList() }, 'Refresh').name('Refresh list');
@@ -484,7 +470,6 @@ function renameMaterialInConfig(config, oldName, newName) {
 
     // Vérifier que le nouveau nom n'existe pas déjà
     if (config[newName]) {
-        console.warn(`Material name "${newName}" already exists. Rename cancelled.`);
         return config;
     }
 
@@ -494,7 +479,6 @@ function renameMaterialInConfig(config, oldName, newName) {
     // Supprimer l'ancien nom
     delete config[oldName];
 
-    console.log(`Material "${oldName}" renamed to "${newName}"`);
     return config;
 }
 
@@ -530,7 +514,6 @@ const exportParams = { Export: () => {
         body: JSON.stringify(configToExport, null, 2)
     }).then(async (res) => {
         if (!res.ok) throw new Error('Save failed');
-        console.log('Materials saved');
         // Force reload materials.json to verify write worked and update in-memory config
         const fresh = await fetch('../materials/materials.json?ts=' + Date.now(), { cache: 'no-store' }).then(r => r.json());
         setMaterialsConfig(fresh);
@@ -541,7 +524,7 @@ const exportParams = { Export: () => {
         // Mettre à jour le sélecteur avec les nouveaux noms de matériaux
         updateMaterialSelectorOptions();
     }).catch((err) => {
-        console.error('Save error', err);
+        // Save error handled
     });
 }};
 gui.add(exportParams, 'Export').name('Export materials');
@@ -552,7 +535,6 @@ function syncGuiFromCurrentMaterial(currentMaterialName) {
     const config = getMaterialsConfig();
     const def = config && config[currentMaterialName];
     if (!def) {
-        console.warn(`Material "${currentMaterialName}" not found in configuration`);
         return;
     }
 
@@ -634,15 +616,12 @@ function initializeGUI() {
         if (config && Object.keys(config).length > 0) {
             // Mettre à jour le sélecteur après le chargement initial
             updateMaterialSelectorOptions();
-            console.log('GUI initialized successfully with materials:', Object.keys(config));
         } else {
             // Les matériaux ne sont pas encore chargés, réessayer dans 100ms
-            console.log('Materials not yet loaded, retrying...');
             setTimeout(initializeGUI, 100);
         }
     } else {
         // L'API n'est pas encore disponible, réessayer dans 100ms
-        console.log('Materials API not yet available, retrying...');
         setTimeout(initializeGUI, 100);
     }
 }

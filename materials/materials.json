@@ -14,7 +14,7 @@
     "normalIntensity": 1
   },
   "white": {
-    "color": "#4c80bc",
+    "color": "#d7e7e7",
     "emissive": "#000000",
     "roughness": 0.6,
     "metalness": 0,

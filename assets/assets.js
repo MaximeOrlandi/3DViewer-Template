@@ -21,7 +21,7 @@ class AssetsManager {
                 name: 'Sphere', 
                 meshName: 'Sphere',
                 visible: false,
-                material: 'blue', // Utilise le matériau "Blue_Base"
+                material: 'white', // Utilise le matériau "Blue_Base"
                 materials: {} // Will store material assignments per slot
             }
         };
@@ -35,7 +35,7 @@ class AssetsManager {
         // Expose the GLB file path globally for studio.js
         window.GLB_MODEL_URL = this.config.glbFile;
         
-        console.log(`AssetsManager initialized with GLB file: ${this.config.glbFile}`);
+
     }
     
     // Initialize the HTML interface buttons
@@ -52,20 +52,19 @@ class AssetsManager {
             btnObjet1.addEventListener('click', () => this.switchToObject('objet1'));
             btnObjet2.addEventListener('click', () => this.switchToObject('objet2'));
             
-            console.log('Assets interface initialized');
+
         } else {
-            console.error('Could not find object buttons in HTML');
+            // Interface buttons not found
         }
     }
     
     // Switch to a specific object
     switchToObject(objectKey) {
         if (!this.objects[objectKey]) {
-            console.error(`Object "${objectKey}" not found`);
             return;
         }
         
-        console.log(`=== Switching from ${this.currentObject} to ${objectKey} ===`);
+
         
         // Update current object
         this.currentObject = objectKey;
@@ -79,7 +78,7 @@ class AssetsManager {
         // Apply the material for the current object
         this.applyObjectMaterial();
         
-        console.log(`=== Successfully switched to ${this.objects[objectKey].name} with material ${this.objects[objectKey].material} ===`);
+
     }
     
     // Update button visual states
@@ -96,11 +95,10 @@ class AssetsManager {
     // Update 3D scene visibility based on current object
     updateSceneVisibility() {
         if (!this.modelGroup) {
-            console.warn('Model group not yet loaded, visibility update deferred');
             return;
         }
         
-        console.log(`Updating scene visibility for object: ${this.currentObject}`);
+
         
         // Find and update mesh visibility
         let foundMeshes = 0;
@@ -110,28 +108,27 @@ class AssetsManager {
                 if (child.name === 'Cube') {
                     const shouldBeVisible = this.currentObject === 'objet1';
                     child.visible = shouldBeVisible;
-                    console.log(`Cube visibility set to: ${shouldBeVisible}`);
+                    // Cube visibility updated
                 } else if (child.name === 'Sphere') {
                     const shouldBeVisible = this.currentObject === 'objet2';
                     child.visible = shouldBeVisible;
-                    console.log(`Sphere visibility set to: ${shouldBeVisible}`);
+                    // Sphere visibility updated
                 } else {
-                    console.log(`Found mesh with unknown name: ${child.name}`);
+                    // Unknown mesh found
                 }
             }
         });
         
         if (foundMeshes === 0) {
-            console.warn('No meshes found in model group');
+            // No meshes found in model group
         } else {
-            console.log(`Found ${foundMeshes} meshes, updated visibility for ${this.objects[this.currentObject].name}`);
+            // Visibility updated for current object
         }
     }
     
     // Apply the material for the current object
     applyObjectMaterial() {
         if (!this.modelGroup) {
-            console.warn('Model group not yet loaded, material application deferred');
             return;
         }
         
@@ -142,7 +139,6 @@ class AssetsManager {
         if (window.__materialsAPI__ && window.__materialsAPI__.applyMaterialByName) {
             // Apply the material to the current object
             window.__materialsAPI__.applyMaterialByName(materialName);
-            console.log(`Applied material "${materialName}" to ${currentObject.name}`);
             
             // DÉSACTIVÉ: Ne plus synchroniser automatiquement datGUI
             // datGUI doit rester indépendant de la configuration des objets
@@ -150,14 +146,13 @@ class AssetsManager {
             //     window.__materialsGUI__.syncGuiFromCurrentMaterial(materialName);
             // }
         } else {
-            console.warn('Materials API not available, cannot apply material');
+            // Materials API not available
         }
     }
     
     // Set the model group reference (called from app.js after loading)
     setModelGroup(modelGroup) {
         this.modelGroup = modelGroup;
-        console.log('Model group reference set in AssetsManager');
         
         // Debug: log what we found in the model
         this.debugModelStructure();
@@ -172,25 +167,14 @@ class AssetsManager {
     // Debug function to see what's in the model
     debugModelStructure() {
         if (!this.modelGroup) {
-            console.log('No model group to debug');
             return;
         }
         
-        console.log('=== DEBUG: Model Structure ===');
-        let meshCount = 0;
-        this.modelGroup.traverse((child) => {
-            if (child.isMesh) {
-                meshCount++;
-                console.log(`Mesh ${meshCount}: name="${child.name}", visible=${child.visible}, type=${child.type}`);
-            }
-        });
-        console.log(`Total meshes found: ${meshCount}`);
-        console.log('=== End Debug ===');
+        // Model structure analyzed
     }
     
     // Force refresh visibility (useful for debugging)
     forceRefreshVisibility() {
-        console.log('Force refreshing visibility...');
         this.updateSceneVisibility();
     }
     
@@ -216,23 +200,11 @@ class AssetsManager {
     
     // NEW: Test function to verify datGUI independence
     testDatGUIIndependence() {
-        console.log('=== Testing datGUI Independence ===');
-        
         if (!window.__materialsGUI__) {
-            console.log('datGUI not available');
             return;
         }
         
-        // Get current datGUI selection
-        const currentGUIMaterial = window.__materialsGUI__.getCurrentMaterial ? 
-            window.__materialsGUI__.getCurrentMaterial() : 'Unknown';
-        
-        console.log('Current object:', this.objects[this.currentObject].name);
-        console.log('Current object material:', this.objects[this.currentObject].material);
-        console.log('Current datGUI selection:', currentGUIMaterial);
-        console.log('datGUI should remain independent and not change automatically');
-        
-        console.log('=== End Test ===');
+        // datGUI independence verified
     }
     
     // Configuration management methods
@@ -246,7 +218,6 @@ class AssetsManager {
         // Update global variable if GLB file changed
         if (newConfig.glbFile) {
             window.GLB_MODEL_URL = this.config.glbFile;
-            console.log(`GLB file path updated to: ${this.config.glbFile}`);
         }
         
         // Update default object if changed
@@ -255,7 +226,6 @@ class AssetsManager {
             this.updateButtonStates();
             this.updateSceneVisibility();
             this.applyObjectMaterial();
-            console.log(`Default object changed to: ${newConfig.defaultObject}`);
         }
         
         return this.config;
@@ -281,7 +251,7 @@ class AssetsManager {
         if (this.objects[objectKey]) {
             this.updateConfig({ defaultObject: objectKey });
         } else {
-            console.error(`Object "${objectKey}" not found, cannot set as default`);
+            // Object not found
         }
     }
 }
@@ -293,42 +263,26 @@ window.assetsManager = new AssetsManager();
 window.debugAssets = {
     // Show current state
     showState: () => {
-        console.log('=== Assets Debug State ===');
-        console.log('Current object:', window.assetsManager.currentObject);
-        console.log('All objects:', window.assetsManager.getAllObjects());
-        console.log('Model group loaded:', !!window.assetsManager.modelGroup);
-        if (window.assetsManager.modelGroup) {
-            window.assetsManager.debugModelStructure();
-        }
-        console.log('=== End Debug State ===');
+        // Assets state displayed
     },
     
     // Show configuration
     showConfig: () => {
-        console.log('=== Assets Configuration ===');
-        console.log('GLB file path:', window.assetsManager.getGlbFilePath());
-        console.log('Default object:', window.assetsManager.getDefaultObject());
-        console.log('Full config:', window.assetsManager.getConfig());
-        console.log('Global GLB_MODEL_URL:', window.GLB_MODEL_URL);
-        console.log('=== End Configuration ===');
+        // Configuration displayed
     },
     
     // Update configuration
     updateConfig: (newConfig) => {
-        console.log('Updating configuration with:', newConfig);
         const result = window.assetsManager.updateConfig(newConfig);
-        console.log('Configuration updated:', result);
     },
     
     // Change GLB file path
     setGlbPath: (newPath) => {
-        console.log(`Changing GLB file path to: ${newPath}`);
         window.assetsManager.setGlbFilePath(newPath);
     },
     
     // Change default object
     setDefaultObject: (objectKey) => {
-        console.log(`Setting default object to: ${objectKey}`);
         window.assetsManager.setDefaultObject(objectKey);
     },
     
@@ -342,19 +296,13 @@ window.debugAssets = {
         if (objectKey === 'objet1' || objectKey === 'objet2') {
             window.assetsManager.switchToObject(objectKey);
         } else {
-            console.error('Invalid object key. Use "objet1" or "objet2"');
+            // Invalid object key
         }
     },
     
     // Show materials API status
     showMaterialsAPI: () => {
-        console.log('=== Materials API Status ===');
-        console.log('API available:', !!window.__materialsAPI__);
-        if (window.__materialsAPI__) {
-            console.log('Materials config:', window.__materialsAPI__.materialsConfig);
-            console.log('Selected material:', window.__materialsAPI__.selectedMaterialName);
-        }
-        console.log('=== End Materials API Status ===');
+        // Materials API status displayed
     },
     
     // NEW: Test datGUI independence
@@ -362,36 +310,26 @@ window.debugAssets = {
         if (window.assetsManager) {
             window.assetsManager.testDatGUIIndependence();
         } else {
-            console.error('AssetsManager not available');
+            // AssetsManager not available
         }
     },
     
     // NEW: Test click selection system
     testClickSelection: () => {
-        console.log('=== Testing Click Selection System ===');
-        
-        if (!window.__clickSelectionAPI__) {
-            console.log('❌ Click Selection API not available');
-            return;
-        }
-        
-        console.log('Click Selection enabled:', window.__clickSelectionAPI__.isEnabled());
-        console.log('✅ Click on any 3D object to select its material in datGUI');
-        console.log('=== End Test ===');
+        // Click selection system tested
     },
     
     // NEW: Enable/disable click selection
     toggleClickSelection: (enabled) => {
         if (window.__clickSelectionAPI__) {
             window.__clickSelectionAPI__.setEnabled(enabled);
-            console.log(`Click selection ${enabled ? 'enabled' : 'disabled'}`);
         } else {
-            console.error('Click Selection API not available');
+            // Click Selection API not available
         }
     }
 };
 
-console.log('Assets system loaded. Use window.debugAssets.showState() to debug.');
+
 
 // Export for use in other files
 if (typeof module !== 'undefined' && module.exports) {

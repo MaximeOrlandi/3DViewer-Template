@@ -94,8 +94,6 @@ function onMouseClick(event) {
         
         // Vérifier si c'est un mesh avec un matériau
         if (clickedObject.isMesh && clickedObject.material) {
-            console.log(`Clic sur: ${clickedObject.name} (${clickedObject.type})`);
-            
             // Trouver le nom du matériau appliqué
             let materialName = null;
             
@@ -111,17 +109,10 @@ function onMouseClick(event) {
             }
             
             if (materialName) {
-                console.log(`Matériau identifié: ${materialName}`);
-                
                 // Sélectionner ce matériau dans datGUI
                 if (window.__materialsGUI__ && window.__materialsGUI__.selectMaterialByName) {
                     window.__materialsGUI__.selectMaterialByName(materialName);
-                    console.log(`✅ Matériau "${materialName}" sélectionné dans datGUI`);
-                } else {
-                    console.warn('datGUI API not available for material selection');
                 }
-            } else {
-                console.log('Matériau non reconnu dans la configuration');
             }
         }
     }
@@ -134,10 +125,8 @@ renderer.domElement.addEventListener('click', onMouseClick, false);
 function setClickSelectionEnabled(enabled) {
     if (enabled) {
         renderer.domElement.addEventListener('click', onMouseClick, false);
-        console.log('✅ Sélection par clic activée');
     } else {
         renderer.domElement.removeEventListener('click', onMouseClick, false);
-        console.log('❌ Sélection par clic désactivée');
     }
 }
 

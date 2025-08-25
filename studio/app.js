@@ -18,7 +18,7 @@ function loadMaterialsConfig() {
     return fetch('../materials/materials.json')
         .then((res) => res.json())
         .then((json) => { materialsConfig = json; })
-        .catch((err) => { console.error('Erreur chargement materials.json', err); materialsConfig = {}; });
+        .catch((err) => { materialsConfig = {}; });
 }
 
 function loadAndApplyMaps(material, definition) {
